@@ -116,18 +116,36 @@ def write_prof_dict_xls(prof_dict, xsl_out):
 
     sheet = book.add_worksheet()
 
+    row_off = 0
+    if True:
+        sheet.merge_range(0,0,0,36, "Orario", merge_format)
+
+        days = [s.capitalize() for s in DAYS_SHIFT.keys()]
+        for i, s in enumerate(days):
+            sheet.merge_range(1, 2 + i * 6,
+                              1, 2 + i * 6 + 5,
+                              s, merge_format)
+        for r in range(6):
+            for i, s in enumerate(START_SHIFT.keys()):
+                if s[0] == "0":
+                    s = s[1:]
+                s = s.replace("h", ":")
+                sheet.write(2, 2 + i + r * 6, s, merge_format)
+        row_off = 3
+
     for row, (prof_cod, ss) in enumerate(sorted(prof_dict.items())):
-            data = list(prof_cod) + ss
-            old = None
-            for col, text in enumerate(data):
-                if text and text == old:
-                    # print(f"merging {row=}, {col=}")
-                    sheet.merge_range(row, col-1,
-                                      row, col,
-                                      text, merge_format)
-                    # old = None
-                else:
-                    sheet.write(row, col, text)
+        row += row_off
+        data = list(prof_cod) + ss
+        old = None
+        for col, text in enumerate(data):
+            if text and text == old:
+                # print(f"merging {row=}, {col=}")
+                sheet.merge_range(row, col-1,
+                                  row, col,
+                                  text, merge_format)
+                old = None
+            else:
+                sheet.write(row, col, text)
                 old = text
     book.close()
 
