@@ -117,9 +117,12 @@ if __name__ == "__main__":
 
     import sys
     args = sys.argv[1:]
-    if len(args) < 1:
+    if len(args) > 2:
         usage()
         sys.exit(1)
+    if not args or args[0] in "-h --help".split():
+        usage()
+        sys.exit(0)
     csv_in = args[0]
     if len(args) == 2:
         csv_out = args[1]
