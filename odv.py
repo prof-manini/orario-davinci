@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+# author: Luca Manini (luca.manini@liceodavincitn.it)
+
 # Questo programma legge dei dati da un "export" delle lezioni
 # (attività) del programma EDT e produce file CSV con una riga per
 # ciascun docente e una colonna per ogni ora di lezione. Ogni cella
