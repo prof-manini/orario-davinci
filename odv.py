@@ -50,12 +50,16 @@ START_SHIFT = {
 def make_lessons_list():
     return [""] * 36
 
-def format_aula(aula):
-    if "(" in aula:
-        aula = aula.split("(")[1]
-    if ")" in aula:
-        aula = aula.split(")")[0]
-    return aula
+# Nel file di export, il dato AULA è piuttosto logorroico, qualcosa
+# del tipo "Aula 3Hsa (2.50)" (quando va bene), me nel tabellone
+# voglio qualcosa di più sintetico.
+
+def format_room(room):
+    if "(" in room:
+        room = room.split("(")[1]
+    if ")" in room:
+        room = room.split(")")[0]
+    return room
 
 # Questo è il dizionario che, per ciascun prof usato come chiave,
 # contiene le relative ore di lezione.  Uso defaultdict così "al primo
@@ -69,12 +73,13 @@ def go(raw_data):
         rows = list(csv.reader(data, delimiter=";"))[1:]
         for r in rows:
             o = Record(*r)
-            prof = (o.DOC_COGN, o.DOC_NOME)
+            prof_cod = (o.DOC_COGN, o.DOC_NOME)
             day_cod = DAYS_SHIFT[o.GIORNO] + START_SHIFT[o.ORA_INIZIO]
-            aula = format_aula(o.AULA)
-            prof_dict[prof][day_cod] = aula + " / " + o.CLASSE
-        for prof, ss in sorted(prof_dict.items()):
-            data = list(prof) + ss
+            room = format_room(o.AULA)
+            cell = room + " / " + o.CLASSE
+            prof_dict[prof_cod][day_cod] = cell
+        for prof_cod, ss in sorted(prof_dict.items()):
+            data = list(prof_cod) + ss
             line = ",".join(data)
             print(line)
 
