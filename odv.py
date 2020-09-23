@@ -3,7 +3,7 @@
 # author: Luca Manini (luca.manini@liceodavincitn.it)
 
 # Questo programma legge dei dati da un "export" delle lezioni
-# (attività) del programma EDT e produce file CSV con una riga per
+# (attività) del programma EDT e produce un file CSV con una riga per
 # ciascun docente e una colonna per ogni ora di lezione. Ogni cella
 # contiene informazioni come per esempio la classe, l'aula o altro.
 
@@ -52,25 +52,29 @@ START_SHIFT = {
 def make_lessons_list():
     return [""] * 36
 
-# Nel file di export, il dato AULA è piuttosto logorroico, qualcosa
-# del tipo "Aula 3Hsa (2.50)" (quando va bene), me nel tabellone
-# voglio qualcosa di più sintetico.
-
 def format_room(room):
+
+    # Nel file di export, il dato AULA è piuttosto logorroico,
+    # qualcosa del tipo "Aula 3Hsa (2.50)" (quando va bene), me nel
+    # tabellone voglio qualcosa di più sintetico, ad esempio solo la
+    # classe.
+
     if "(" in room:
         room = room.split("(")[1]
     if ")" in room:
         room = room.split(")")[0]
+    room = room.replace("<Aule per gruppi>Aula Magna 4° piano", "A.Magna")
     return room
 
-# Questo è il dizionario che, per ciascun prof usato come chiave,
-# contiene le relative ore di lezione.  Uso defaultdict così "al primo
-# giro" ho già una lista stringhe vuote delle lunghezza corretta
-# (generata da make_lessons_list).
+def data_to_dict(raw_data):
 
-prof_dict = defaultdict(make_lessons_list)
+    # Questo è il dizionario che, per ciascun prof usato come chiave,
+    # contiene le relative ore di lezione.  Uso defaultdict così "al
+    # primo giro" ho già una lista di stringhe vuote (generata da
+    # make_lessons_list) della lunghezza corretta.
 
-def go(raw_data):
+    prof_dict = defaultdict(make_lessons_list)
+
     with open(raw_data, newline="", encoding="utf-16") as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
         for r in rows:
@@ -80,20 +84,45 @@ def go(raw_data):
             room = format_room(o.AULA)
             cell = room + " / " + o.CLASSE
             prof_dict[prof_cod][day_cod] = cell
+
+    return prof_dict
+
+def write_prof_dict(prof_dict, csv_out):
+
+    # Qui scrivo il risultato in un file CSV usando semplicemente un
+    # file di testo e relativo metodo "write".  Il modulo csv ha un
+    # metodo apposito che però non mi pare offra vantaggi
+    # interessanti.
+
+    with open(csv_out, "w") as output:
         for prof_cod, ss in sorted(prof_dict.items()):
             data = list(prof_cod) + ss
             line = ",".join(data)
-            print(line)
+            output.write(line + "\n")
+
+def main(csv_in, csv_out):
+
+    # Questa funzione è l'entry point del modulo, sia nel senso che è
+    # la funzione chiamata nel blocco "if __name__ ..." sia nel senso
+    # che è la funzione chiamabile da un altro file dopo aver
+    # importato questo come modulo.
+
+    prof_dict = data_to_dict(csv_in)
+    write_prof_dict(prof_dict, csv_out)
 
 def usage():
-    print("usage: odv.py export-csv-file")
+    print("usage: odv.py export-csv-file [output-csv-file]")
 
 if __name__ == "__main__":
 
     import sys
     args = sys.argv[1:]
-    if len(args) != 1:
+    if len(args) < 1:
         usage()
         sys.exit(1)
-    csv_export = args[0]
-    go(csv_export)
+    csv_in = args[0]
+    if len(args) == 2:
+        csv_out = args[1]
+    else:
+        csv_out = "output-orario.csv"
+    main(csv_in, csv_out)
