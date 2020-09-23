@@ -1,4 +1,4 @@
-#! /usr/bin/env/python3
+#! /usr/bin/env python3
 
 # Questo programma legge dei dati da un "export" delle lezioni
 # (attività) del programma EDT e produce file CSV con una riga per
