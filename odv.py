@@ -64,7 +64,7 @@ def format_room(room):
         room = room.split("(")[1]
     if ")" in room:
         room = room.split(")")[0]
-    room = room.replace("<Aule per gruppi>Aula Magna 4° piano", "A.Magna")
+    room = room.replace("<Aule per gruppi>Aula Magna 4° piano", "A.M.")
     return room
 
 def data_to_dict(raw_data):
