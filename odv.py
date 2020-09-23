@@ -9,6 +9,7 @@
 
 import csv
 from collections import defaultdict, namedtuple
+import xlsxwriter
 
 # Questi sono gli header di colonna contenuti nella prima riga del
 # CSV, che poi uso come nomi dei "campi del record" che costruisco per
@@ -80,14 +81,18 @@ def data_to_dict(raw_data):
         for r in rows:
             o = Record(*r)
             prof_cod = (o.DOC_COGN, o.DOC_NOME)
-            day_cod = DAYS_SHIFT[o.GIORNO] + START_SHIFT[o.ORA_INIZIO]
             room = format_room(o.AULA)
             cell = room + " / " + o.CLASSE
-            prof_dict[prof_cod][day_cod] = cell
+            size = int(o.DURATA[0]) # 1h00, 2h00 etc
+            for i in range(size):
+                day_cod = (DAYS_SHIFT[o.GIORNO] +
+                           START_SHIFT[o.ORA_INIZIO] +
+                           i)
+                prof_dict[prof_cod][day_cod] = cell
 
     return prof_dict
 
-def write_prof_dict(prof_dict, csv_out):
+def write_prof_dict_csv(prof_dict, csv_out):
 
     # Qui scrivo il risultato in un file CSV usando semplicemente un
     # file di testo e relativo metodo "write".  Il modulo csv ha un
@@ -100,7 +105,35 @@ def write_prof_dict(prof_dict, csv_out):
             line = ",".join(data)
             output.write(line + "\n")
 
-def main(csv_in, csv_out):
+def write_prof_dict_xls(prof_dict, xsl_out):
+
+    # https://xlsxwriter.readthedocs.io/examples.html
+
+    book = xlsxwriter.Workbook(xsl_out)
+    merge_format = book.add_format({
+        'align': 'center',
+    })
+
+    sheet = book.add_worksheet()
+
+    for row, (prof_cod, ss) in enumerate(sorted(prof_dict.items())):
+            data = list(prof_cod) + ss
+            old = None
+            for col, text in enumerate(data):
+                if text and text == old:
+                    # print(f"merging {row=}, {col=}")
+                    sheet.merge_range(row, col-1,
+                                      row, col,
+                                      text, merge_format)
+                    # old = None
+                else:
+                    sheet.write(row, col, text)
+                old = text
+    book.close()
+
+def main(csv_in,
+         csv_out="output-orario.csv",
+         xls_out="output-orario.xls"):
 
     # Questa funzione è l'entry point del modulo, sia nel senso che è
     # la funzione chiamata nel blocco "if __name__ ..." sia nel senso
@@ -108,7 +141,8 @@ def main(csv_in, csv_out):
     # importato questo come modulo.
 
     prof_dict = data_to_dict(csv_in)
-    write_prof_dict(prof_dict, csv_out)
+    write_prof_dict_csv(prof_dict, csv_out)
+    write_prof_dict_xls(prof_dict, xls_out)
 
 def usage():
     print("usage: odv.py export-csv-file [output-csv-file]")
