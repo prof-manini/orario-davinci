@@ -78,7 +78,15 @@ def go(raw_data):
             line = ",".join(data)
             print(line)
 
+def usage():
+    print("usage: odv.py export-csv-file")
+
 if __name__ == "__main__":
 
-    SRC = "./data/exp-1.csv"
-    go(SRC)
+    import sys
+    args = sys.argv[1:]
+    if len(args) != 1:
+        usage()
+        sys.exit(1)
+    csv_export = args[0]
+    go(csv_export)
