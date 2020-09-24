@@ -109,38 +109,75 @@ def write_prof_dict_csv(prof_dict, csv_out):
 def write_prof_dict_xls(prof_dict, xsl_out):
 
     # https://xlsxwriter.readthedocs.io/examples.html
+    # https://xlsxwriter.readthedocs.io/format.html#format
 
     book = xlsxwriter.Workbook(xsl_out)
+    title_format = book.add_format({
+        'align': 'center',
+        'bold': True,
+        'font_size': 20,
+        })
+    days_format = book.add_format({
+        'align': 'center',
+        'bold': True,
+        })
+    hours_format = book.add_format({
+        'align': 'center',
+        'bold': True,
+        })
     merge_format = book.add_format({
         'align': 'center',
     })
 
     sheet = book.add_worksheet()
+    sheet.set_default_row(20)
 
-    row_off = 0
+    # Scrittura della parte "fissa" di headers
+    row = 0
     if True:
-        sheet.merge_range(0,0,0,36, "Orario", merge_format)
 
+        # Titolo: centrato su tutta la larghezza (36 colonne)
+
+        sheet.set_row(row, 24)
+        sheet.merge_range(0,0,0,36, "Orario", title_format)
+        row += 1
+
+        # Giorni della settimana, presi da DAYS_SHIFT
+
+        sheet.set_row(row, 22)
         days = [s.capitalize() for s in DAYS_SHIFT.keys()]
         for i, s in enumerate(days):
-            sheet.merge_range(1, 2 + i * 6,
-                              1, 2 + i * 6 + 5,
-                              s, merge_format)
+            sheet.merge_range(row, 2 + i * 6,
+                              row, 2 + i * 6 + 5,
+                              s, days_format)
+        row += 1
+
+        # Ore del giorno, prese da START_SHIFT, in cui hanno un
+        # formato tipo 07h30 che converto in 7:30.
+
+        sheet.set_row(row, 20)
         for r in range(6):
             for i, s in enumerate(START_SHIFT.keys()):
                 if s[0] == "0":
                     s = s[1:]
                 s = s.replace("h", ":")
-                sheet.write(2, 2 + i + r * 6, s, merge_format)
-        row_off = 3
+                sheet.write(row, 2 + i + r * 6, s, hours_format)
+        row += 1
 
+    # Scrittura delle righe relative alle ore di lezione. Tutto facile
+    # a parte raggruppare le "doppiette" o le "triplette". Per fare
+    # questo uso un "trucco", se una cella ha lo stesso contenuto
+    # della precedente faccio un merge; fortunatamente pare funzionare
+    # anche "ricorsivamente", per esempio facendo il merge di una
+    # terza ora con le precedenti due già raggruppate.
+
+    row_off = row
     for row, (prof_cod, ss) in enumerate(sorted(prof_dict.items())):
         row += row_off
         data = list(prof_cod) + ss
         old = None
         for col, text in enumerate(data):
             if text and text == old:
-                # print(f"merging {row=}, {col=}")
                 sheet.merge_range(row, col-1,
                                   row, col,
                                   text, merge_format)
