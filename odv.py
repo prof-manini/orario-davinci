@@ -131,7 +131,10 @@ def write_prof_dict_csv(prof_dict, csv_out):
 
     with open(csv_out, "w") as output:
         for prof_cod, ss in sorted(prof_dict.items()):
-            data = list(prof_cod) + ss
+            prof_surname, prof_firstname = prof_cod
+            prof_data = "%s %s." % (prof_surname, prof_firstname and
+                                    prof_firstname[0])
+            data = [prof_data] + ss
             line = ",".join(data)
             output.write(line + "\n")
 
@@ -172,8 +175,8 @@ def write_prof_dict_xls(prof_dict, xsl_out):
 
     sheet = book.add_worksheet()
     sheet.set_default_row(20)
-    sheet.set_column(0, 0, 20, prof_format)
-    sheet.set_column(1, 1, 25, prof_format)
+    sheet.set_column(0, 0, 25, prof_format)
+    # sheet.set_column(1, 1, 25, prof_format)
 
     # Scrittura della parte "fissa" di headers
     row = 0
@@ -217,7 +220,10 @@ def write_prof_dict_xls(prof_dict, xsl_out):
     row_off = row
     for row, (prof_cod, ss) in enumerate(sorted(prof_dict.items())):
         row += row_off
-        data = list(prof_cod) + ss
+        prof_surname, prof_firstname = prof_cod
+        prof_data = "%s %s." % (prof_surname, prof_firstname and
+                                    prof_firstname[0])
+        data = [prof_data] + ss
         old = None
         for col, text in enumerate(data):
             if col in [0,1]:
