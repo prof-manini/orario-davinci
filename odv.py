@@ -163,9 +163,17 @@ def write_prof_dict_xls(prof_dict, xsl_out):
     merge_format = book.add_format({
         'align': 'center',
     })
+    cell_format = book.add_format({
+        'align': 'center',
+    })
+    prof_format = book.add_format({
+        'align': 'left',
+    })
 
     sheet = book.add_worksheet()
     sheet.set_default_row(20)
+    sheet.set_column(0, 0, 20, prof_format)
+    sheet.set_column(1, 1, 25, prof_format)
 
     # Scrittura della parte "fissa" di headers
     row = 0
@@ -212,14 +220,18 @@ def write_prof_dict_xls(prof_dict, xsl_out):
         data = list(prof_cod) + ss
         old = None
         for col, text in enumerate(data):
-            if text and text == old:
-                sheet.merge_range(row, col-1,
-                                  row, col,
-                                  text, merge_format)
-                old = None
+            if col in [0,1]:
+                sheet.write(row, col, text, prof_format)
             else:
-                sheet.write(row, col, text)
-                old = text
+                if text and text == old:
+                    sheet.merge_range(row, col-1,
+                                      row, col,
+                                      text, merge_format)
+                    old = None
+                else:
+                    sheet.write(row, col, text, cell_format)
+                    old = text
+
     book.close()
 
 def main(csv_in,
