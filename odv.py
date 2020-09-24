@@ -82,7 +82,8 @@ def data_to_dict(raw_data):
             o = Record(*r)
             prof_cod = (o.DOC_COGN, o.DOC_NOME)
             room = format_room(o.AULA)
-            cell = room + " / " + o.CLASSE
+            # cell = room + " / " + o.CLASSE
+            cell = room
             size = int(o.DURATA[0]) # 1h00, 2h00 etc
             for i in range(size):
                 day_cod = (DAYS_SHIFT[o.GIORNO] +
