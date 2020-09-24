@@ -79,10 +79,40 @@ def data_to_dict(raw_data):
     with open(raw_data, newline="", encoding="utf-16") as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
         for r in rows:
+
+            # Qui creo, a partire dalla "riga" letta da CSV, una
+            # struttura i cui (nomi degli) attributi sono definiti
+            # dalla classe Record e che ho lasciato uguali a quelli
+            # presenti nel file CSV.
+
             o = Record(*r)
+
+            # I dati delle varie righe vengono raccolti in un
+            # dizionario in cui le chiavi sono i dati del docente, ad
+            # esempio la coppia cognome/nome.
+
             prof_cod = (o.DOC_COGN, o.DOC_NOME)
+
+            # Dati sulla classe
+
             room = format_room(o.AULA)
+
+            # Qui scelto cosa scrivere nelle celle del foglio. Posso
+            # mettere sola la classe, solo l'aula o quello che voglio.
+            # Qui ci sono alcuni esempi da (s)commentare.
+
             # cell = room + " / " + o.CLASSE
+            cell = o.CLASSE
+            # cell = room
+
+            # Qui gestisco le ore "multiple" (consecutive). Nel file
+            # CSV, per ogni lezione c'è una sola riga, in cui si
+            # indica però anche la durata.  Quello che faccio qui è
+            # "duplicare il dato" per ciascuna ora di lezione,
+            # perdendo così il dato esplicito della durata.  Poi nella
+            # generazione dell'XLS mi preoccupa di fare il merge delle
+            # varie celle.
+
             size = int(o.DURATA[0]) # 1h00, 2h00 etc
             for i in range(size):
                 day_cod = (DAYS_SHIFT[o.GIORNO] +
@@ -107,10 +137,16 @@ def write_prof_dict_csv(prof_dict, csv_out):
 
 def write_prof_dict_xls(prof_dict, xsl_out):
 
+    # Nel dubbio, consultare:
     # https://xlsxwriter.readthedocs.io/examples.html
     # https://xlsxwriter.readthedocs.io/format.html#format
 
     book = xlsxwriter.Workbook(xsl_out)
+
+    # Qui posso definire vari formati che poi utilizzo nelle chiamate
+    # a merge_range e a write (credo). Hanno un aspetto molto CSS, ma
+    # non so se la corrispondenza è completa.
+
     title_format = book.add_format({
         'align': 'center',
         'bold': True,
