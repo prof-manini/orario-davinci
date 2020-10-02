@@ -28,11 +28,13 @@ Record = namedtuple("Record", """
 # sei ore di lezione, questi sono gli offset necessari.
 
 DAYS_SHIFT = {"lunedì":     0,
-              "martedì":    6,
-              "mercoledì": 12,
-              "giovedì":   18,
-              "venerdì":   24,
-              "sabato":    30}
+              "martedì":    8,
+              "mercoledì": 16,
+              "giovedì":   24,
+              "venerdì":   32,
+              "sabato":    40}
+
+DAYS_PER_WEEK = len(DAYS_SHIFT)
 
 # Nel file di export le lezioni sono conraddistinte dall'ora di
 # inizio, in formato HhM, che io voglio convertire in un altro offset.
