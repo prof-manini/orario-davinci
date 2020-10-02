@@ -69,6 +69,16 @@ def format_room(room):
     room = room.replace("<Aule per gruppi>Aula Magna 4° piano", "A.M.")
     return room
 
+def get_encoding(file):
+    for e in ["utf-8", "utf-16"]:
+        try:
+            f = open(file, encoding=e)
+            f.read()
+            f.close()
+            return e
+        except UnicodeDecodeError:
+            pass
+
 def data_to_dict(raw_data):
 
     # Questo è il dizionario che, per ciascun prof usato come chiave,
@@ -78,7 +88,8 @@ def data_to_dict(raw_data):
 
     prof_dict = defaultdict(make_lessons_list)
 
-    with open(raw_data, newline="", encoding="utf-16") as data:
+    enc = get_encoding(raw_data)
+    with open(raw_data, newline="", encoding=enc) as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
         for r in rows:
 
