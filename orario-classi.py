@@ -103,6 +103,8 @@ def grid_to_table(grid):
         for cell in row:
             if cell:
                 m, p = cell
+            else:
+                m, p = "",""
             t += '  <td align="center">%s</br>%s</td>' % (m, p)
         t += "\n  </tr>\n"
     # print(t)
@@ -123,10 +125,10 @@ def main(csv_in,
     recs = csv_to_records(csv_in)
     class_dict = records_to_class_dict(recs)
     for k, v in class_dict.items():
-        if k in "3Nsa".split():
-            t = class_to_table(k, v)
-            # print(v)
-            print(t)
+        t = class_to_table(k, v)
+        k = k.replace("/", "")
+        with open("orario-classi/%s.html" % k, "w") as html_out:
+            html_out.write(t + "\n")
 
 def usage():
     print("usage: orario-classi export-csv-file [output-csv-file]")
