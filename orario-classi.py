@@ -2,9 +2,13 @@
 
 # author: Luca Manini (luca.manini@liceodavincitn.it)
 
-import csv
+import os
 from collections import defaultdict, namedtuple
-import xlsxwriter
+import csv
+import logging
+logging.basicConfig(level=logging.DEBUG,
+                    format="%(levelname)s: %(message)s")
+debug = logging.debug
 
 # Questi sono gli header di colonna contenuti nella prima riga del
 # CSV, che poi uso come nomi dei "campi del record" che costruisco per
@@ -49,9 +53,11 @@ def get_encoding(file):
 
 def csv_to_records(csv_in):
 
+    debug("Reading input file '%s'" % csv_in)
     enc = get_encoding(csv_in)
     with open(csv_in, newline="", encoding=enc) as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
+        debug(f"{len(rows)} rows found")
         for r in rows:
             yield Record(*r)
 
@@ -68,6 +74,7 @@ def records_to_class_dict(records):
                           r.MAT_COD,
                           r.DOC_COGN)
             class_dict[class_id].append(class_data)
+    debug(f"{len(class_dict)} classes found")
     return class_dict
 
 HTML_FMT = r"""
@@ -118,34 +125,33 @@ def class_to_table(klass, lessons):
     return HTML_FMT % {"klass": klass,
                        "rows": lessons_to_table(lessons)}
 
-def main(csv_in,
-         csv_out="output-orario-classi.csv",
-         xls_out="output-orario-classi.xls"):
+HTML_OUTDIR = "orario-classi"
+
+def main(csv_in, html_outdir=HTML_OUTDIR):
 
     recs = csv_to_records(csv_in)
     class_dict = records_to_class_dict(recs)
+    os.makedirs(html_outdir, exist_ok=True)
     for k, v in class_dict.items():
         t = class_to_table(k, v)
-        k = k.replace("/", "")
-        with open("orario-classi/%s.html" % k, "w") as html_out:
+        k = k.replace("/", "-")
+        k = k.replace(" ", "_")
+        f = os.path.join(html_outdir, "%s.html" % k)
+        with open(f, "w") as html_out:
             html_out.write(t + "\n")
 
 def usage():
-    print("usage: orario-classi export-csv-file [output-csv-file]")
+    print("usage: orario-classi export-csv-file")
 
 if __name__ == "__main__":
 
     import sys
     args = sys.argv[1:]
-    if len(args) > 2:
+    if len(args) > 1:
         usage()
         sys.exit(1)
     if not args or args[0] in "-h --help".split():
         usage()
         sys.exit(0)
     csv_in = args[0]
-    if len(args) == 2:
-        csv_out = args[1]
-    else:
-        csv_out = "output-orario.csv"
-    main(csv_in, csv_out)
+    main(csv_in)
