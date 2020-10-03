@@ -50,10 +50,14 @@ START_SHIFT = {
     "11h20": 4,
     "12h15": 5,
     "13h10": 6,
+    "14h00": 7
     }
 
+LESSONS_PER_DAY = len(START_SHIFT)
+LESSONS_PER_WEEK = LESSONS_PER_DAY * DAYS_PER_WEEK
+
 def make_lessons_list():
-    return [""] * 36
+    return [""] * LESSONS_PER_WEEK
 
 def format_room(room):
 
@@ -131,6 +135,8 @@ def data_to_dict(raw_data):
                 day_cod = (DAYS_SHIFT[o.GIORNO] +
                            START_SHIFT[o.ORA_INIZIO] +
                            i)
+                # if o.ORA_INIZIO == "13h10":
+                #     print(f"{day_cod=} {o.GIORNO=}")
                 prof_dict[prof_cod][day_cod] = cell
 
     return prof_dict
@@ -193,34 +199,38 @@ def write_prof_dict_xls(prof_dict, xsl_out):
 
     # Scrittura della parte "fissa" di headers
     row = 0
+    prof_off = 1         # numero di colonne usate per i dati del prof
     if True:
 
-        # Titolo: centrato su tutta la larghezza (36 colonne)
+        # Titolo: centrato su tutta la larghezza (48 colonne)
 
         sheet.set_row(row, 24)
-        sheet.merge_range(0,0,0,36, "Orario", title_format)
+        sheet.merge_range(0,0,0,48, "Orario", title_format)
         row += 1
 
         # Giorni della settimana, presi da DAYS_SHIFT
 
         sheet.set_row(row, 22)
         days = [s.capitalize() for s in DAYS_SHIFT.keys()]
-        for i, s in enumerate(days):
-            sheet.merge_range(row, 2 + i * 6,
-                              row, 2 + i * 6 + 5,
-                              s, days_format)
+        for i, day in enumerate(days):
+            range_start = prof_off + i * LESSONS_PER_DAY
+            range_end   = range_start + LESSONS_PER_DAY - 1
+            sheet.merge_range(row, range_start,
+                              row, range_end,
+                              day, days_format)
         row += 1
 
         # Ore del giorno, prese da START_SHIFT, in cui hanno un
         # formato tipo 07h30 che converto in 7:30.
 
         sheet.set_row(row, 20)
-        for r in range(6):
-            for i, s in enumerate(START_SHIFT.keys()):
-                if s[0] == "0":
-                    s = s[1:]
-                s = s.replace("h", ":")
-                sheet.write(row, 2 + i + r * 6, s, hours_format)
+        for d in range(DAYS_PER_WEEK):
+            for i, hour in enumerate(START_SHIFT.keys()):
+                if hour[0] == "0":
+                    hour = hour[1:]
+                hour = hour.replace("h", ":")
+                sheet.write(row, prof_off + i + d * LESSONS_PER_DAY, # ???
+                            hour, hours_format)
         row += 1
 
     # Scrittura delle righe relative alle ore di lezione. Tutto facile
