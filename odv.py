@@ -11,6 +11,10 @@
 import csv
 from collections import defaultdict, namedtuple
 import xlsxwriter
+import logging
+logging.basicConfig(level=logging.DEBUG,
+                    format="%(levelname)s: %(message)s")
+debug = logging.debug
 
 # generic data structures and functions ----------------------------
 
@@ -58,22 +62,19 @@ DAYS_SHIFT = {"lunedì":     0,
               "venerdì":   32,
               "sabato":    40}
 
+def list_to_items_pos_dict(oo):
+    # ["foo", 123, "bar"] -> {"foo":0, 123:1, "bar":2}
+    return {v:k for k,v in enumerate(oo)}
+
+DAYS_INDEX = list_to_items_pos_dict(DAYS_SHIFT.keys())
 DAYS_PER_WEEK = len(DAYS_SHIFT)
 
 # In the raw data file, the start time of each lesson is coded in the
 # format shown below, but it is useful to be able to easily convert it
 # in a sequence id.
 
-START_SHIFT = {
-    "07h50": 0,
-    "08h40": 1,
-    "09h30": 2,
-    "10h30": 3,
-    "11h20": 4,
-    "12h15": 5,
-    "13h10": 6,
-    "14h00": 7
-    }
+START_TIMES = "07h50 08h40 09h30 10h30 11h20 12h15 13h10 14h00".split()
+START_SHIFT = list_to_items_pos_dict(START_TIMES)
 
 LESSONS_PER_DAY = len(START_SHIFT)
 LESSONS_PER_WEEK = LESSONS_PER_DAY * DAYS_PER_WEEK
@@ -124,6 +125,8 @@ def data_to_dict(raw_data):
     prof_dict = defaultdict(make_lessons_list)
 
     enc = get_encoding(raw_data)
+
+    debug{f"Reading raw data file '{raw_data}', encoding with {enc}"}
     with open(raw_data, newline="", encoding=enc) as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
         for r in rows:
@@ -179,6 +182,7 @@ def write_prof_dict_csv(prof_dict, csv_out):
     # metodo apposito che però non mi pare offra vantaggi
     # interessanti.
 
+    debug(f"Writing output CSV file '{csv_out}'")
     with open(csv_out, "w") as output:
         for prof_cod, ss in sorted(prof_dict.items()):
             prof_surname, prof_firstname = prof_cod
@@ -194,6 +198,7 @@ def write_prof_dict_xls(prof_dict, xsl_out):
     # https://xlsxwriter.readthedocs.io/examples.html
     # https://xlsxwriter.readthedocs.io/format.html#format
 
+    debug(f"Writing output XLS file '{xsl_out}'")
     book = xlsxwriter.Workbook(xsl_out)
 
     # Qui posso definire vari formati che poi utilizzo nelle chiamate
