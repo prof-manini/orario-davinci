@@ -8,73 +8,19 @@
 # indica la materia e il docente.
 
 import os
-from collections import defaultdict, namedtuple
 import csv
+from collections import defaultdict
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format="%(levelname)s: %(message)s")
 debug = logging.debug
 
-# Questi sono gli header di colonna contenuti nella prima riga del
-# CSV, che poi uso come nomi dei "campi del record" che costruisco per
-# ciascuna riga.  Non è importante usare quelli definiti nel file ma
-# non ho motivo per cambiarli.
+from odv import (
+    Record, get_encoding,
+    DAYS_INDEX, START_SHIFT, START_TIMES,
+    )
 
-Record = namedtuple("Record", """
-    NUMERO DURATA FREQUENZA MAT_COD MAT_NOME
-    DOC_COGN DOC_NOME CLASSE AULA PERIODICITA
-    SPECIFICA CO_DOC COEFF GIORNO ORA_INIZIO ALUNNI
-""")
-
-# Lista degli orari di inizio delle singole lezioni. Nel programma che
-# genera il tabellone generale che per ciascun docente (righe) indica
-# per ciascuna ora di lezione in quale classe si trova (colonne),
-# questo dizionario serviva per passare dall'indicazione dell'ora
-# (presa dai dati grezzi), alla "colonna" in cui inserire i dati. Qui
-# lo riciclo solo per generare START_TIMES, che per ciascuna riga
-# della tabella che sto generando, mi dà l'ora di inizio (che metto
-# nella prima colonna).
-
-START_SHIFT = {
-    "07h50": 0,
-    "08h40": 1,
-    "09h30": 2,
-    "10h30": 3,
-    "11h20": 4,
-    "12h15": 5,
-    "13h10": 6,
-    "14h00": 7
-    }
-
-START_TIMES = {v:k for k,v in START_SHIFT.items()}
-
-# Anche questo dizionario serve per passare dai nomi dei giorni (letti
-# dai dati grezzi) ad un indice che uso come posizione all'interno
-# della lista in cui inserisco il resto dei dati.
-
-DAYS_INDEX = {"lunedì":    0,
-              "martedì":   1,
-              "mercoledì": 2,
-              "giovedì":   3,
-              "venerdì":   4,
-              "sabato":    5}
-
-# Il file CSV con i dati grezzi (export del programma EDT) usa la
-# codifica UTF-16 (chissà poi perché).  In realtà è più comodo averli
-# in UTF-8, quantomeno per poter usare grep! A questo punto è meglio
-# se il programma accetta i due formati. Purtroppo il formato non è
-# definito esplicitamente nel file, e quindi la cosa migliore è
-# verificare provando.
-
-def get_encoding(file):
-    for e in ["utf-8", "utf-16"]:
-        try:
-            f = open(file, encoding=e)
-            f.read()
-            f.close()
-            return e
-        except UnicodeDecodeError:
-            pass
+progname = os.path.basename(__file__)
 
 # Qui leggo i dati grezzi e per ciascuna riga restituisco un "record",
 # ossia un oggetto con attributi (molto più comodo che una lista o una
@@ -196,7 +142,7 @@ def main(csv_in, html_outdir=HTML_OUTDIR):
             html_out.write(t + "\n")
 
 def usage():
-    print("usage: orario-classi export-csv-file")
+    print(f"usage: {progname} export-csv-file")
 
 if __name__ == "__main__":
 
@@ -210,3 +156,14 @@ if __name__ == "__main__":
         sys.exit(0)
     csv_in = args[0]
     main(csv_in)
+
+
+
+
+
+DAYS_INDEX = {"lunedì":    0,
+              "martedì":   1,
+              "mercoledì": 2,
+              "giovedì":   3,
+              "venerdì":   4,
+              "sabato":    5}
