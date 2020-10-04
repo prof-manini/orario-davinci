@@ -1,0 +1,15 @@
+* Introduction
+
+  The code in this repo concerns the EDT software used in many schools
+  to create and manage the class schedule (teachers, classes,
+  subjects, lessons, etc.).
+
+  EDT exports its data in various ways and formats, the more useful
+  one being a full export of all lessons in CSV format and UTF-16 (!)
+  enconding.
+
+  From that data you can extract, process, format and output a lot of
+  other "tables" like the full timetable (one row for each teacher,
+  one column for each hour, with the class code in each cell) ot the
+  class timetable (one column per day, one row per hour and subject
+  and teacher info in each cell) and so on.
