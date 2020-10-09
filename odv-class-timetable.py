@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG,
 debug = logging.debug
 
 from odv import (
-    Record, get_encoding,
+    Record, get_encoding, csv_to_records,
     DAYS_INDEX, START_SHIFT, START_TIMES,
     )
 
