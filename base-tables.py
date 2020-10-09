@@ -21,6 +21,8 @@ def main(csv_in, base_tables_outdir="./out"):
 
     recs = tuple(csv_to_records(csv_in))
 
+    # subjects (materie) ----------------------------------------
+
     mat_dic = dict()
     for r in recs:
         mat_dic[r.MAT_COD] = r.MAT_NOME
@@ -29,6 +31,8 @@ def main(csv_in, base_tables_outdir="./out"):
     with open(mat_file, "w") as out:
         for k,v in sorted(mat_dic.items()):
             out.write(f"{k} = {v}\n")
+
+    # classes --------------------------------------------------
 
     # class "codes" can have different "formats":
     #
@@ -71,6 +75,36 @@ def main(csv_in, base_tables_outdir="./out"):
     class_file = os.path.join(base_tables_outdir, "class_out.txt")
     with open(class_file, "w") as out:
         for k,v in sorted(class_single.items()):
+            z = " ".join([s for s in sorted(v)])
+            out.write(f"{k} = {z}\n")
+
+    # professors --------------------------------------------------
+
+    prof_dic = defaultdict(set)
+
+    for r in recs:
+        k,v = (r.DOC_COGN, r.DOC_NOME), r.MAT_COD
+        prof_dic[k].add(v)
+
+    class_file = os.path.join(base_tables_outdir, "prof_out.txt")
+    with open(class_file, "w") as out:
+        for k,v in sorted(prof_dic.items()):
+            z = " ".join([s for s in sorted(v)])
+            k = ", ".join(k)
+            out.write(f"{k} = {z}\n")
+
+    # rooms --------------------------------------------------------
+
+    room_dic = defaultdict(set)
+
+    for r in recs:
+        k,v = r.AULA, r.CLASSE
+        v = v.rstrip("[as]")
+        room_dic[k].add(v)
+
+    class_file = os.path.join(base_tables_outdir, "room_out.txt")
+    with open(class_file, "w") as out:
+        for k,v in sorted(room_dic.items()):
             z = " ".join([s for s in sorted(v)])
             out.write(f"{k} = {z}\n")
 
