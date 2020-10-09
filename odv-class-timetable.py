@@ -22,20 +22,6 @@ from odv import (
 
 progname = os.path.basename(__file__)
 
-# Qui leggo i dati grezzi e per ciascuna riga restituisco un "record",
-# ossia un oggetto con attributi (molto più comodo che una lista o una
-# tupla).
-
-def csv_to_records(csv_in):
-
-    debug("Reading input file '%s'" % csv_in)
-    enc = get_encoding(csv_in)
-    with open(csv_in, newline="", encoding=enc) as data:
-        rows = list(csv.reader(data, delimiter=";"))[1:]
-        debug(f"{len(rows)} rows found")
-        for r in rows:
-            yield Record(*r)
-
 # Qui prendo i record generati in csv_to_records e creo un dizionario
 # con il nome della classe come chiave e i dati (di solito materia e
 # docente) per le celle della tabella dell'orario per classe.

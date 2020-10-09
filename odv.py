@@ -96,6 +96,20 @@ def get_encoding(file):
             pass
     raise ValueError(f"Unable to detect enconding for '{file}'")
 
+# Qui leggo i dati grezzi e per ciascuna riga restituisco un "record",
+# ossia un oggetto con attributi (molto più comodo che una lista o una
+# tupla).
+
+def csv_to_records(csv_in):
+
+    debug("Reading input file '%s'" % csv_in)
+    enc = get_encoding(csv_in)
+    with open(csv_in, newline="", encoding=enc) as data:
+        rows = list(csv.reader(data, delimiter=";"))[1:]
+        debug(f"{len(rows)} rows found")
+        for r in rows:
+            yield Record(*r)
+
 # code specific to full-timetable (tabellone) --------------------
 
 def make_lessons_list():
@@ -126,7 +140,7 @@ def data_to_dict(raw_data):
 
     enc = get_encoding(raw_data)
 
-    debug{f"Reading raw data file '{raw_data}', encoding with {enc}"}
+    debug(f"Reading raw data file '{raw_data}', encoding with {enc}")
     with open(raw_data, newline="", encoding=enc) as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
         for r in rows:
