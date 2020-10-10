@@ -27,6 +27,25 @@ def main(csv_in, base_tables_outdir="./out"):
     for r in recs:
         mat_dic[r.MAT_COD] = r.MAT_NOME
 
+    # Il file mat_out.txt contiene una riga per ciascuna materia con
+    # il codice della materia, un segno di uguale come separatore e
+    # poi il nome per esteso della materia (come compare nel file di
+    # export di EDT). Qualcosa del tipo:
+    #
+    # DIR = Diritto ed Economia
+    # DIS = Disegno e Storia dell'arte
+    # FIL = Filosofia
+    # ING = Lingua e Cultura Straniera Inglese
+    #
+    # Questo file può essere usato come base di partenza per creare un
+    # altro file da usare come dizionario delle "abbreviazioni".
+    # Qualcosa del tipo:
+    #
+    # DIR = Dir. Eco.
+    # DIS = Dis. Arte
+    # FIL = Filosofia
+    # ING = Inglese
+
     mat_file = os.path.join(base_tables_outdir, "mat_out.txt")
     with open(mat_file, "w") as out:
         for k,v in sorted(mat_dic.items()):
@@ -72,6 +91,16 @@ def main(csv_in, base_tables_outdir="./out"):
     for k,v in class_multiple.items():
         class_single[k].update(class_multiple[k])
 
+    # Il file class_out contiene una riga per classe con il codice
+    # della classe, un segno di uguale come separatore e poi le
+    # materie di quella classe (le materie in minuscolo solo estratte
+    # dalle righe "multiple").  Qualcosa del tipo:
+    #
+    # 2F = DIS FIS INF ING IRC ITA MAT MOT SCI STG TED
+    # 2G = DIS FIS ING IRC ITA LAT MAT MOT SCI STG spa ted
+    # 2H = DIS FIS INF ING IRC ITA MAT MOT SCI STG spa ted
+    # 2I = DIS FIS ING IRC ITA LAT MAT MOT SCI STG TED
+
     class_file = os.path.join(base_tables_outdir, "class_out.txt")
     with open(class_file, "w") as out:
         for k,v in sorted(class_single.items()):
@@ -85,6 +114,10 @@ def main(csv_in, base_tables_outdir="./out"):
     for r in recs:
         k,v = (r.DOC_COGN, r.DOC_NOME), r.MAT_COD
         prof_dic[k].add(v)
+
+    # Il file prof_out.txt contiene una riga per ciascun professore,
+    # con cognome e nome (separati da virgola), il solito separatore e
+    # poi la lista delle materie insegnate (codice).
 
     class_file = os.path.join(base_tables_outdir, "prof_out.txt")
     with open(class_file, "w") as out:
@@ -101,6 +134,28 @@ def main(csv_in, base_tables_outdir="./out"):
         k,v = r.AULA, r.CLASSE
         v = v.rstrip("[as]")
         room_dic[k].add(v)
+
+    # Il file room_out.txt contiene una riga per ciascuna aula, con il
+    # nome dell'aula (che in realtà è una descrizione abbastanza
+    # logorroica che contiene anche la "sigla" dell'aula, tipo 1.23),
+    # il solito separatore e poi la lista delle classi che la
+    # utilizzano (che in orario hanno almeno un'ora in quell'aula).
+    # Qualcosa del tipo:
+    #
+    # <Aule per gruppi>Aula proiezioni (0.22) = 3D/I TED ..............
+    # <Aule per gruppi>Mediateca (0.45) = 1G/H TED 2G/H  ..............
+    # <Lab. Informatica>Lab. Informatica 1 (2° p 2.04) = 1D 1F ........
+    # <Palestre>Palestra 2 (Est) = 1A 1D 1I 1N 1P 1R 2F 2Q 3B  ........
+    # Aula 1Gs (1.33) = 1G
+    #
+    # Anche qui sarebbe bene cercare di trovare dei "nomi" più corti e
+    # più pratici e creare (magari in parte in modo automatico in
+    # parte a mano) un nuovo file con un contenuto del tipo:
+    #
+    # Proiezioni = (0.22)
+    # Lab. Info 1 = (2.04)
+    # Palestra 2 (Est) = ???
+    # Aula 1G = (1.33)
 
     class_file = os.path.join(base_tables_outdir, "room_out.txt")
     with open(class_file, "w") as out:
