@@ -23,6 +23,8 @@ from odv import (
 progname = os.path.basename(__file__)
 
 HTML_OUTDIR = "out/class-timetable-html/"
+XML_OUTDIR = "out/class-timetable-xls/"
+CSV_OUTDIR = "out/class-timetable-csv/"
 
 # Qui prendo i record generati in csv_to_records e creo un dizionario
 # con il nome della classe come chiave e i dati (di solito materia e
@@ -102,15 +104,28 @@ def lessons_to_table(lessons):
 
 # E qui anche.
 
-def class_to_table(klass, lessons):
+def class_to_html_table(klass, lessons):
     return HTML_FMT % {"klass": klass,
                        "rows": lessons_to_table(lessons)}
+
+def class_to_csv_table(klass, lessons):
+    return f"{klass}\n"
+
+def write_csv(class_dict, csv_outdir):
+
+    os.makedirs(csv_outdir, exist_ok=True) # grant dir existence
+    csv_out = os.path.join(csv_outdir, "class-timetable.csv")
+    debug(f"Writing output CSV file '{csv_out}'")
+    with open(csv_out, "w") as output:
+        for k, v in class_dict.items():
+            t = class_to_csv_table(k, v)
+            output.write(t)
 
 def write_html(class_dict, html_outdir):
 
     os.makedirs(html_outdir, exist_ok=True) # grant dir existence
     for k, v in class_dict.items():
-        t = class_to_table(k, v)
+        t = class_to_html_table(k, v)
 
         # A volte il "codice della classe" è qualcosa del tipo "2G/H
         # SPA", che come stringa da utilizzare nel nome di un file non
@@ -130,6 +145,7 @@ def main(csv_in, html_outdir=HTML_OUTDIR):
     recs = csv_to_records(csv_in)
     class_dict = records_to_class_dict(recs)
     write_html(class_dict, html_outdir)
+    write_csv(class_dict, CSV_OUTDIR)
 
 def usage():
     print(f"usage: {progname} export-csv-file")
