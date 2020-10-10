@@ -22,6 +22,8 @@ from odv import (
 
 progname = os.path.basename(__file__)
 
+HTML_OUTDIR = "out/class-timetable-html/"
+
 # Qui prendo i record generati in csv_to_records e creo un dizionario
 # con il nome della classe come chiave e i dati (di solito materia e
 # docente) per le celle della tabella dell'orario per classe.
@@ -104,14 +106,8 @@ def class_to_table(klass, lessons):
     return HTML_FMT % {"klass": klass,
                        "rows": lessons_to_table(lessons)}
 
-HTML_OUTDIR = "orario-classi"
+def write_html(class_dict, html_outdir):
 
-# Entry point principale del programma
-
-def main(csv_in, html_outdir=HTML_OUTDIR):
-
-    recs = csv_to_records(csv_in)
-    class_dict = records_to_class_dict(recs)
     os.makedirs(html_outdir, exist_ok=True) # grant dir existence
     for k, v in class_dict.items():
         t = class_to_table(k, v)
@@ -126,6 +122,14 @@ def main(csv_in, html_outdir=HTML_OUTDIR):
         f = os.path.join(html_outdir, "%s.html" % k)
         with open(f, "w") as html_out:
             html_out.write(t + "\n")
+
+# Entry point principale del programma
+
+def main(csv_in, html_outdir=HTML_OUTDIR):
+
+    recs = csv_to_records(csv_in)
+    class_dict = records_to_class_dict(recs)
+    write_html(class_dict, html_outdir)
 
 def usage():
     print(f"usage: {progname} export-csv-file")
