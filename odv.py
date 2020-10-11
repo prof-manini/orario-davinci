@@ -112,6 +112,11 @@ def csv_to_records(csv_in):
         for r in rows:
             yield Record(*r)
 
+def _me():
+    # https://www.oreilly.com/library/view/python-cookbook/0596001673/ch14s08.html
+    import sys
+    return sys._getframe(1).f_code.co_name
+
 # code specific to full-timetable (tabellone) --------------------
 
 def make_lessons_list():
