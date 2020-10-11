@@ -109,7 +109,7 @@ def class_to_html_table(klass, lessons):
                        "rows": lessons_to_table(lessons)}
 
 def class_to_csv_table(klass, lessons):
-    return f"{klass}\n"
+    return f"{klass} -> {lessons}\n"
 
 def write_csv(class_dict, csv_outdir):
 
