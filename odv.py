@@ -319,3 +319,28 @@ def write_prof_dict_xls(prof_dict, xsl_out):
                     old = text
 
     book.close()
+
+if __name__ == "__main__":
+
+    import sys
+    import os
+    progname = os.path.basename(__file__)
+
+    def usage():
+        print(f"usage: {progname} export-csv-file")
+
+    args = sys.argv[1:]
+    if len(args) > 1:
+        usage()
+        sys.exit(1)
+    if not args or args[0] in "-h --help".split():
+        usage()
+        sys.exit(0)
+    csv_in = args[0]
+
+    recs = csv_to_records(csv_in)
+    class_dict = records_to_class_dict(recs)
+    for k,v in sorted(class_dict.items()):
+        for r in v:
+            continue
+            print(k, r.MAT_COD, r.DOC_COGN, r.DOC_NOME)
