@@ -117,6 +117,60 @@ def _me():
     import sys
     return sys._getframe(1).f_code.co_name
 
+def records_to_class_dict(recs):
+
+    # This function comes from odv-class-timetable.py, that was the
+    # first place were I found out about "multiclass" lines in EDT's
+    # export. Those lines originate from the fact that some classe
+    # sometime "split" to attend different lessons (e.g. some students
+    # get TED and some ENG).
+
+    # This function get the usual RECS (sequence of Records) and build
+    # a dictionary whith the class code as key and a list of records
+    # as value. Multiclass lines add multiple records to the list.
+
+    # class "codes" can have different "formats":
+    #
+    # 1As  = first year, group A, type s (plain old fashion)
+    # 1Bsa = first year, group B, type sa (the almost good one)
+    #
+    # Because there is no Asa not Bs, I'll drop the suffix
+    #
+    # 2G/H   SPA = second year, TWO separate classes (G/H) doing SPANISH
+    # 4G/H/R SPA = second year, THREE separate classes (G/H/R) doing SPANISH
+    # this line is equivalent (and will be transformed into) TWO records.
+
+    class_single = defaultdict(list)
+    class_multiple = defaultdict(list)
+    multi_count = 0
+    recs = tuple(recs)
+    for r in recs:
+        k,v = r.CLASSE, r
+        if "/" in k:                   # "2G/H SPA"
+            cc, mat = k.split()        # ["2G/H". "SPA"]
+            try:
+                cc = cc.split("/")        # ["2G", "H"]
+                multi_count += 1
+            except:
+                error(f"{_me()}: Bad class record {cc}")
+                continue
+            cc = [cc[0]] + [cc[0][0] + c for c in cc[1:]]
+            # debug(f"Multiclass record {cc}")
+            for k in cc:
+                # debug(f"Multi {k=} {v=}")
+                class_multiple[k].append(v)
+        else:
+            # debug(f"Single {k=} {v=}")
+            class_single[k[:2]].append(v)
+
+    for k,v in class_multiple.items():
+        class_single[k].extend(class_multiple[k])
+
+    debug(f"{_me()}: multiclass recs:{multi_count}")
+    debug(f"{_me()}: classes:{len(class_single)}")
+
+    return class_single
+
 # code specific to full-timetable (tabellone) --------------------
 
 def make_lessons_list():
