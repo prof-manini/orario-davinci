@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 # author: Luca Manini (luca.manini@liceodavincitn.it)
 
 # Base module for processing school lessons schedule data produced by
