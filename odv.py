@@ -119,15 +119,23 @@ def _me():
 
 def records_to_class_dict(recs):
 
+    # This function get the usual RECS (sequence of Records) and build
+    # a dictionary whith the class code as key and a list of records
+    # as value. Each record corresponds to ONE hour of
+    # lesson.
+
+    # Each rec in RECS may produce more that on entry in the class's
+    # item for two different reasons.  First, each record has a
+    # DURATION (nomber of hours) and I'll generate one record for each
+    # hour. Second, some recs are "multiclass lines" (as explained
+    # below).
+
     # This function comes from odv-class-timetable.py, that was the
     # first place were I found out about "multiclass" lines in EDT's
     # export. Those lines originate from the fact that some classe
     # sometime "split" to attend different lessons (e.g. some students
-    # get TED and some ENG).
-
-    # This function get the usual RECS (sequence of Records) and build
-    # a dictionary whith the class code as key and a list of records
-    # as value. Multiclass lines add multiple records to the list.
+    # get TED and some ENG) and that is indicated with the
+    # "multiclass" code.
 
     # class "codes" can have different "formats":
     #
