@@ -177,6 +177,22 @@ def records_to_class_dict(recs):
     debug(f"{_me()}: multiclass recs:{multi_count}")
     debug(f"{_me()}: classes:{len(class_single)}")
 
+    lessons_count = 0
+    for k,v in class_single.items(): # k = classes
+        z = v.copy()                 # z = list of lessons (recs)
+        for r in z:                  # r = lesson (rec)
+            d = int(r.DURATA[0])
+            lessons_count += 1
+            # debug(f"{_me()}: long lesson {r.CLASSE} -> {d}")
+            for _ in range(d-1):
+                v.append(r)
+
+    classes_count = len(class_single)
+
+    debug(f"{_me()}: lessons count:{lessons_count}")
+    debug(f"{_me()}: classes:{classes_count}")
+    debug(f"{_me()}: lessons/class:{lessons_count/classes_count:.2f}")
+
     return class_single
 
 # code specific to full-timetable (tabellone) --------------------
@@ -404,5 +420,6 @@ if __name__ == "__main__":
     class_dict = records_to_class_dict(recs)
     for k,v in sorted(class_dict.items()):
         for r in v:
-            continue
-            print(k, r.MAT_COD, r.DOC_COGN, r.DOC_NOME)
+            if r.DURATA[0] != "1":
+                # continue
+                print(k, r.MAT_COD, r.DURATA, r.DOC_COGN, r.DOC_NOME, )
