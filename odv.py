@@ -407,19 +407,14 @@ if __name__ == "__main__":
     def usage():
         print(f"usage: {progname} export-csv-file")
 
+    import sys
     args = sys.argv[1:]
     if len(args) > 1:
         usage()
         sys.exit(1)
-    if not args or args[0] in "-h --help".split():
+    if args and args[0] in "-h --help".split():
         usage()
         sys.exit(0)
-    csv_in = args[0]
+    csv_in = args and args[0] or CSV_INPUT
 
-    recs = csv_to_records(csv_in)
-    class_dict = records_to_class_dict(recs)
-    for k,v in sorted(class_dict.items()):
-        for r in v:
-            if r.DURATA[0] != "1":
-                # continue
-                print(k, r.MAT_COD, r.DURATA, r.DOC_COGN, r.DOC_NOME, )
+    class_time_table(csv_in)

@@ -22,6 +22,7 @@ from odv import (
 
 progname = os.path.basename(__file__)
 
+CSV_INPUT = "data/export.csv"
 HTML_OUTDIR = "out/class-timetable-html/"
 XML_OUTDIR = "out/class-timetable-xls/"
 CSV_OUTDIR = "out/class-timetable-csv/"
@@ -148,7 +149,7 @@ def main(csv_in, html_outdir=HTML_OUTDIR):
     write_csv(class_dict, CSV_OUTDIR)
 
 def usage():
-    print(f"usage: {progname} export-csv-file")
+    print(f"usage: {progname} [export-csv-file]")
 
 if __name__ == "__main__":
 
@@ -157,19 +158,8 @@ if __name__ == "__main__":
     if len(args) > 1:
         usage()
         sys.exit(1)
-    if not args or args[0] in "-h --help".split():
+    if args and args[0] in "-h --help".split():
         usage()
         sys.exit(0)
-    csv_in = args[0]
+    csv_in = args and args[0] or CSV_INPUT
     main(csv_in)
-
-
-
-
-
-DAYS_INDEX = {"lunedì":    0,
-              "martedì":   1,
-              "mercoledì": 2,
-              "giovedì":   3,
-              "venerdì":   4,
-              "sabato":    5}
