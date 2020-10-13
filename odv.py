@@ -11,12 +11,15 @@
 # "Record" data type.
 
 import csv
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+from recordclass import recordclass as namedtuple
 import xlsxwriter
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format="%(levelname)s: %(message)s")
 debug = logging.debug
+
+CSV_INPUT = "data/export.csv"
 
 # generic data structures and functions ----------------------------
 
@@ -30,7 +33,12 @@ Record = namedtuple("Record", """
     NUMERO DURATA FREQUENZA MAT_COD MAT_NOME
     DOC_COGN DOC_NOME CLASSE AULA PERIODICITA
     SPECIFICA CO_DOC COEFF GIORNO ORA_INIZIO ALUNNI
+    ORA_PROG
 """)
+
+def make_record(row):
+    row.append(None)              # ORA_PROG
+    return Record(*row)
 
 # Example of a (splitted) row's content:
 #
@@ -110,7 +118,7 @@ def csv_to_records(csv_in):
         rows = list(csv.reader(data, delimiter=";"))[1:]
         debug(f"{len(rows)} rows found")
         for r in rows:
-            yield Record(*r)
+            yield make_record(r)
 
 def _me():
     # https://www.oreilly.com/library/view/python-cookbook/0596001673/ch14s08.html
@@ -397,6 +405,10 @@ def write_prof_dict_xls(prof_dict, xsl_out):
                     old = text
 
     book.close()
+
+def make_class_timetable_csv(klass, lessons):
+    rr = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
+    return rr
 
 if __name__ == "__main__":
 
