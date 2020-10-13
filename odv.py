@@ -304,19 +304,6 @@ def write_prof_dict_csv(prof_dict, csv_out):
             line = ",".join(data)
             output.write(line + "\n")
 
-MAT_NAMES = dict()
-def get_mat_names(input="data/mat_names.txt"):
-    if MAT_NAMES:
-        return MAT_NAMES
-    debug("{_me()}: reading {input}")
-    with open(input) as rows:
-        for r in rows:
-            if not r.strip():
-                continue
-            k, v = map(str.strip, r.split("="))
-            MAT_NAMES[k] = v
-    return MAT_NAMES
-
 def write_prof_dict_xls(prof_dict, xsl_out):
 
     # Nel dubbio, consultare:
@@ -424,6 +411,21 @@ def write_prof_dict_xls(prof_dict, xsl_out):
 
     book.close()
 
+# code specific to odv-class-timetable --------------------
+
+MAT_NAMES = dict()
+def get_mat_names(input="data/mat_names.txt"):
+    if MAT_NAMES:
+        return MAT_NAMES
+    debug("{_me()}: reading {input}")
+    with open(input) as rows:
+        for r in rows:
+            if not r.strip():
+                continue
+            k, v = map(str.strip, r.split("="))
+            MAT_NAMES[k] = v
+    return MAT_NAMES
+
 def start_sorter(r):
     return r.ORA_PROG
 
@@ -435,28 +437,36 @@ def make_class_timetable_csv(klass, lessons):
     return rr
 
 def class_time_table(csv_in):
+
     recs = csv_to_records(csv_in)
     class_dict = records_to_class_dict(recs)
     lessons_dict = defaultdict(list)
+
+    # Reorganize date from class_dict (that uses classes as keys) to
+    # lessons_dict (that uses days as keys).  Both use records a
+    # values.
+
     for klass, recs in sorted(class_dict.items()):
         day_lessons = defaultdict(list)
         lessons_dict[klass] = day_lessons
         for r in recs:
             day_lessons[r.GIORNO].append(r)
 
+    # Load abbreviations for subjects: "Inglese" instead "Lingua e
+    # Cultura Straniera Inglese" as description for ING).
+
     mat_names = get_mat_names()
+
+
     for klass, lessons in sorted(lessons_dict.items()):
-        print(f"\n--- {klass} --------------------")
-        # print(" ".join(make_class_timetable_csv(klass, lessons)))
-        day = None
+        print(f"\n=== {klass} ====================")
         for day, lessons in sorted(lessons.items(), key=day_sorter):
-            # if o.GIORNO != day:
-            #     day = o.GIORNO
             print(f"\n    {day} ----------------")
             for o in sorted(lessons, key=start_sorter):
-                start = o.ORA_INIZIO.replace("h", ".")
-                mat = mat_names[o.MAT_COD]
-                print(f"{mat:12s} {start}   {o.DOC_COGN}")
+                start = o.ORA_INIZIO.replace("h", ".") # 07h50 -> 07.50
+                start = start.lstrip("0")              # 07.50 ->  7.50
+                mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                print(f"{mat:12s} {start:>5.5s}   {o.DOC_COGN}")
 
 if __name__ == "__main__":
 
