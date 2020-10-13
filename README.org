@@ -13,3 +13,19 @@
   one column for each hour, with the class code in each cell) ot the
   class timetable (one column per day, one row per hour and subject
   and teacher info in each cell) and so on.
+
+* Code structure
+
+  Code structure will change during development and even more when we
+  will implement some sort of "packaging and distribution" (github,
+  zip, docker...).
+
+  The basic idea is to have:
+
+  1. one dir with input data (data)
+  2. one dir with output data (out)
+  3. one common module (odv)
+  4. some "programs" (odv-full-timetable, odv-class-timetable, etc.)
+
+  Eventually there will be some more docs (docstring) and some testing
+  (doctest).
