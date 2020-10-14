@@ -1,9 +1,8 @@
 * headers                                                          :noexport:
 
 #+INCLUDE: ~/standard-org-latex-export-headers.org
-#+TITLE:
+#+TITLE: Code to process data exported from EDT \newline (school timetable software)
 #+AUTHOR: Luca Manini\footnote{\textcopyright\ 2020 Luca Manini}
-#+DATE: Maggio 2020
 #+OPTIONS: toc:nil        no default TOC at all
 
 * setup                                                            :noexport:
