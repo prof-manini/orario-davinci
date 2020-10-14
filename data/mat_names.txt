@@ -1,0 +1,16 @@
+DIR = Dir. Eco.
+DIS = Dis. Arte
+FIL = Filosofia
+FIS = Fisica
+INF = Informatica
+ING = Inglese
+IRC = IRC
+ITA = Italiano
+LAT = Latino
+MAT = Matematica
+MOT = Sci. Mot.
+SCI = Scienze
+SPA = Spagnolo
+STG = Sto. Geo.
+STO = Storia
+TED = Tedesco
