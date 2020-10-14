@@ -3,3 +3,8 @@ data/
 *.csv
 *.pdf
 web/
+*.toc
+*.log
+*.out
+*.aux
+*.tex
