@@ -10,6 +10,7 @@
 # headers can be found in this source file in the definition of the
 # "Record" data type.
 
+from itertools import zip_longest as zip
 import csv
 from collections import defaultdict
 from recordclass import recordclass as namedtuple
@@ -506,17 +507,21 @@ def make_class_timetable_csv(klass, lessons):
     rr = list()
     # dd = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
 
-    hh = [""] + [s.replace("h", ".").lstrip("0") for s in START_TIMES]
+    hh = [""] + [s.replace("h", ":").lstrip("0") for s in START_TIMES]
     rr.append(hh)
 
     for day, lessons in sorted(lessons.items(), key=day_sorter):
-        r = [[day]]
+        r = [day]
         for o in sorted(lessons, key=start_sorter):
             mat = mat_names[o.MAT_COD]             # ING -> Inglese
-            r.append(f"{mat:12s} {o.DOC_COGN}")
+            r.append(f'"{o.ORA_INIZIO} {o.DOC_COGN}"')
+            # r.append(f"{mat:12s} {o.DOC_COGN}")
         rr.append(r)
 
-    rr = list(zip(*rr))
+    rr = list(zip(*rr, fillvalue=""))
+    kk = [""] * 3 + [klass] + [""] * 3
+    rr.insert(0, [""] * len(kk))
+    rr.insert(1, kk)
     return rr
 
 def class_time_table(csv_in, csv_out="./a.csv"):
@@ -538,11 +543,90 @@ def class_time_table(csv_in, csv_out="./a.csv"):
     with open(csv_out, "w") as output:
         for klass, lessons in sorted(lessons_dict.items()):
             out = make_class_timetable_csv(klass, lessons)
-            print(out)
             for r in out:
-                print(" | ".join(r))
-            return
-            # output.write(out + "\n")
+                if any (r[1:]):
+                    s = ",".join(r)
+                    # return
+                    output.write(s + "\n")
+            output.write("\n")
+
+
+
+
+
+def make_class_timetable_array(klass, lessons):
+
+    # Load abbreviations for subjects: "Inglese" instead "Lingua e
+    # Cultura Straniera Inglese" as description for ING).
+
+    mat_names = get_mat_names()
+
+    # print(f"\n=== {klass} ====================")
+    rr = list()
+    # dd = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
+
+    hh = [""] + [s.replace("h", ":").lstrip("0") for s in START_TIMES]
+    rr.append(hh)
+
+    for day, lessons in sorted(lessons.items(), key=day_sorter):
+        r = [day.capitalize()]
+        for o in sorted(lessons, key=start_sorter):
+            mat = mat_names[o.MAT_COD]             # ING -> Inglese
+            r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()}")
+        rr.append(r)
+
+    rr = list(zip(*rr, fillvalue=""))
+    kk = [""] * 3 + [klass] + [""] * 3
+    rr.insert(0, [""] * len(kk))
+    rr.insert(1, kk)
+    return rr
+
+def write_class_time_table_xls(csv_in, xls_out="out/class-timetable.xls"):
+
+    # https://xlsxwriter.readthedocs.io/format.html#set_align
+    debug(f"Writing output XLS file '{xls_out}'")
+    book = xlsxwriter.Workbook(xls_out)
+    wrap_text = book.add_format()
+    wrap_text.set_text_wrap()
+    wrap_text.set_align("center")
+    wrap_text.set_align("vcenter")
+
+    recs = csv_to_records(csv_in)
+    class_dict = records_to_class_dict(recs)
+    lessons_dict = defaultdict(list)
+
+    sheet = book.add_worksheet()
+    sheet.set_default_row(30)
+    sheet.set_column(1, 6, 15)
+
+    # Reorganize date from class_dict (that uses classes as keys) to
+    # lessons_dict (that uses days as keys).  Both use records a
+    # values.
+
+    for klass, recs in sorted(class_dict.items()):
+        day_lessons = defaultdict(list)
+        lessons_dict[klass] = day_lessons
+        for r in recs:
+            day_lessons[r.GIORNO].append(r)
+
+    # Load abbreviations for subjects: "Inglese" instead "Lingua e
+    # Cultura Straniera Inglese" as description for ING).
+
+    mat_names = get_mat_names()
+
+    row_index = 0
+    for klass, lessons in sorted(lessons_dict.items()):
+        sheet.write(row_index, 0, "")
+        row_index += 1
+        out = make_class_timetable_array(klass, lessons)
+        for r in out:
+            if not any (r[1:]):
+                continue
+            for col_index, s in enumerate(r):
+                sheet.write(row_index, col_index, s, wrap_text)
+            row_index += 1
+
+    book.close()
 
 if __name__ == "__main__":
 
@@ -563,4 +647,5 @@ if __name__ == "__main__":
         sys.exit(0)
     csv_in = args and args[0] or CSV_INPUT
 
-    class_time_table(csv_in)
+    write_class_time_table_xls(csv_in)
+    # class_time_table(csv_in)
