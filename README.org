@@ -1,3 +1,23 @@
+* headers                                                          :noexport:
+
+#+INCLUDE: ~/standard-org-latex-export-headers.org
+#+TITLE:
+#+AUTHOR: Luca Manini\footnote{\textcopyright\ 2020 Luca Manini}
+#+DATE: Maggio 2020
+#+OPTIONS: toc:nil        no default TOC at all
+
+* setup                                                            :noexport:
+
+#+BEGIN_SRC elisp :results output
+(add-to-list 'org-latex-packages-alist '("" "minted"))
+(setq org-latex-listings 'minted)
+(setq org-babel-load-languages
+        '((emacs-lisp . t)
+          (python . t)
+          (sh . t)))
+(setq python-shell-interpreter "python3")
+#+END_SRC
+
 * Introduction
 
   The code in this repo concerns the EDT software used in many schools
@@ -29,3 +49,67 @@
 
   Eventually there will be some more docs (docstring) and some testing
   (doctest).
+
+* Use
+
+** Command line interface
+
+   All "programs" can be used "from the command line", that is writing
+   a command at the prompt (usually indicated with a dollar sign).
+   Being Python programs, thay have to be interpreted by the python
+   program.  For example, if the file =odv-class-timetable= is the
+   current directory:
+#+BEGIN_SRC :eval never python
+$ python odv-full-timetable
+#+END_SRC
+
+   All programs accept arguments (usually filenames) and options.
+   Among the options there is always a a *-h* or *--help* one that gives
+   come information on how to run the program and which arguments and
+   options it accepts. For example:
+#+BEGIN_SRC :eval never python
+$ pyhton odv-class-timetable --help
+usage: odv-class-timetable.py [export-csv-file]
+#+END_SRC
+
+** Graphical user interface
+
+   May be in the future?
+
+
+** Input output
+
+   Almost all programs use the data exported from the EDT software;
+   the path to the export file can be given on the command line and
+   the default path is (at the moment) =data/export.csv=.
+
+   File produces by the program are usually written to the =out=
+   directory (or some subdir of it).
+
+   A the momento there is no way to change those paths from the
+   command line, that will surely change in the future.
+
+** Debug messages
+
+   All programs write debugging information during execution. Messages
+   are written to the /standard output/, so they will appear ont the
+   "screen".  You can just ignore them but they can be useful when
+   reporting problems. Example:
+#+BEGIN_SRC :eval never
+$ python odv-class-timetable.py
+DEBUG: Reading input file 'data/export.csv'
+DEBUG: 1867 rows found
+DEBUG: 110 classes found
+DEBUG: Writing output CSV file 'out/class-timetable-csv/class-timetable.csv'
+#+END_SRC
+
+* Local Vxoariables                                                :noexport:
+
+# Local Variables:
+# indent-tabs-mode: nil
+# ispell-local-dictionary: "english"
+# flyspell-mode: t
+# org-src-preserve-indentation: t
+# org-confirm-babel-evaluate: nil
+# org-src-fontify-natively: t
+# End:
