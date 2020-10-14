@@ -432,11 +432,7 @@ def start_sorter(r):
 def day_sorter(d):
     return DAYS_INDEX[d[0]]
 
-def make_class_timetable_csv(klass, lessons):
-    rr = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
-    return rr
-
-def class_time_table(csv_in):
+def class_time_table_try(csv_in):
 
     recs = csv_to_records(csv_in)
     class_dict = records_to_class_dict(recs)
@@ -457,6 +453,37 @@ def class_time_table(csv_in):
 
     mat_names = get_mat_names()
 
+    # The timetable should look something like:
+    """
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    |       | Lunedì    | Martedì     | Mercoledì | Giovedì | Venerdì | Sabato |
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    |  7.50 |           | Informatica |           |         |         |        |
+    |       |           | Manini      |           |         |         |        |
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    |  8.40 |           | Informatica |           |         |         |        |
+    |       |           | Manini      |           |         |         |        |
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    |  9.30 |           |             | Italiano  |         |         |        |
+    |       |           |             | Rossi     |         |         |        |
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    | 10.30 |           |             |           |         |         |        |
+    |       |           |             |           |         |         |        |
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    | 11.20 | Dir. Eco. |             |           |         |         |        |
+    |       | Verdi     |             |           |         |         |        |
+    |-------+-----------+-------------+-----------+---------+---------+--------|
+    """
+    # Here we have all the data we need, but ordered by weekday first
+    # (and then by time) while in the table the
+    # order should be time first.
+    #
+    # If we put the data in a "matrix" (list of lists, We may then use
+    # the zip function to "transpose" it.
+    #
+    # >>> t = [[1,2,3], [4,5,6], [7,8,9]]
+    # >>> list(zip(*t))
+    # [(1, 4, 7), (2, 5, 8), (3, 6, 9)]
 
     for klass, lessons in sorted(lessons_dict.items()):
         print(f"\n=== {klass} ====================")
@@ -467,6 +494,55 @@ def class_time_table(csv_in):
                 start = start.lstrip("0")              # 07.50 ->  7.50
                 mat = mat_names[o.MAT_COD]             # ING -> Inglese
                 print(f"{mat:12s} {start:>5.5s}   {o.DOC_COGN}")
+
+def make_class_timetable_csv(klass, lessons):
+
+    # Load abbreviations for subjects: "Inglese" instead "Lingua e
+    # Cultura Straniera Inglese" as description for ING).
+
+    mat_names = get_mat_names()
+
+    # print(f"\n=== {klass} ====================")
+    rr = list()
+    # dd = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
+
+    hh = [""] + [s.replace("h", ".").lstrip("0") for s in START_TIMES]
+    rr.append(hh)
+
+    for day, lessons in sorted(lessons.items(), key=day_sorter):
+        r = [[day]]
+        for o in sorted(lessons, key=start_sorter):
+            mat = mat_names[o.MAT_COD]             # ING -> Inglese
+            r.append(f"{mat:12s} {o.DOC_COGN}")
+        rr.append(r)
+
+    rr = list(zip(*rr))
+    return rr
+
+def class_time_table(csv_in, csv_out="./a.csv"):
+
+    recs = csv_to_records(csv_in)
+    class_dict = records_to_class_dict(recs)
+    lessons_dict = defaultdict(list)
+
+    # Reorganize date from class_dict (that uses classes as keys) to
+    # lessons_dict (that uses days as keys).  Both use records a
+    # values.
+
+    for klass, recs in sorted(class_dict.items()):
+        day_lessons = defaultdict(list)
+        lessons_dict[klass] = day_lessons
+        for r in recs:
+            day_lessons[r.GIORNO].append(r)
+
+    with open(csv_out, "w") as output:
+        for klass, lessons in sorted(lessons_dict.items()):
+            out = make_class_timetable_csv(klass, lessons)
+            print(out)
+            for r in out:
+                print(" | ".join(r))
+            return
+            # output.write(out + "\n")
 
 if __name__ == "__main__":
 
