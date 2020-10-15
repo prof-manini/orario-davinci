@@ -12,7 +12,7 @@
 
 from itertools import zip_longest as zip
 import csv
-from collections import defaultdict
+from collections import defaultdict, OrderedDict as ordereddict
 from recordclass import recordclass as namedtuple
 import xlsxwriter
 import logging
@@ -427,12 +427,6 @@ def get_mat_names(input="data/mat_names.txt"):
             MAT_NAMES[k] = v
     return MAT_NAMES
 
-def start_sorter(r):
-    return r.ORA_PROG
-
-def day_sorter(d):
-    return DAYS_INDEX[d[0]]
-
 def class_time_table_try(csv_in):
 
     recs = csv_to_records(csv_in)
@@ -550,9 +544,11 @@ def class_time_table(csv_in, csv_out="./a.csv"):
                     output.write(s + "\n")
             output.write("\n")
 
+def start_sorter(r):
+    return r.ORA_PROG
 
-
-
+def day_sorter(d):
+    return DAYS_INDEX[d[0]]
 
 def make_class_timetable_array(klass, lessons):
 
@@ -565,14 +561,59 @@ def make_class_timetable_array(klass, lessons):
     rr = list()
     # dd = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
 
-    hh = [""] + [s.replace("h", ":").lstrip("0") for s in START_TIMES]
+    # START_TIMES = "07h50 08h40 09h30 10h30 11h20 12h15 13h10 14h00".split()
+
+    END_TIMES = [               # BUG: stupid name!
+        "8:00 - 8:40",
+        "8:50 - 9:30",
+        "9:40 - 10:20",
+        "10:40 - 11:20",
+        "11:30 - 12:10",
+        "12:20 - 13:00",
+        "13:10 - 14:00",
+        "14:00 - 14:40",
+    ]
+    END_TIMES = ordereddict((               # BUG: stupid name!
+        ("07h50",  "8:00 - 8:40"),
+        ("08h40",  "8:50 - 9:30"),
+        ("09h30",  "9:40 - 10:20"),
+        ("10h30", "10:40 - 11:20"),
+        ("11h20", "11:30 - 12:10"),
+        ("12h15", "12:20 - 13:00"),
+        ("13h10", "13:10 - 14:00"),
+        ("14h00", "14:00 - 14:40"),
+    ))
+    # BUG
+    # hh = [""] + [s.replace("h", ".").lstrip("0") for s in START_TIMES]
+    hh = [""] + list(END_TIMES.values())
     rr.append(hh)
 
     for day, lessons in sorted(lessons.items(), key=day_sorter):
         r = [day.capitalize()]
-        for o in sorted(lessons, key=start_sorter):
-            mat = mat_names[o.MAT_COD]             # ING -> Inglese
-            r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()}")
+        # BUG:
+        # Here I'm looping on lessons but it is important to also
+        # produce lines (hour) where this class has no lesson (e.g.:
+        # this class start the day with the second hour on monday).
+        # for o in sorted(lessons, key=start_sorter):
+        #     mat = mat_names[o.MAT_COD]             # ING -> Inglese
+        #     r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()}")
+
+        foo = ordereddict()
+        for st in START_TIMES:
+            foo[st] = None
+        for less in lessons:
+            foo[less.ORA_INIZIO] = less
+
+        for st, o in foo.items():
+            if o is None:
+                r.append("")
+            else:
+                mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                if o.DOC_NOME:
+                    zot = o.DOC_NOME[0] + "."
+                else:
+                    zot = ""
+                r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()} {zot}")
         rr.append(r)
 
     rr = list(zip(*rr, fillvalue=""))
@@ -648,4 +689,4 @@ if __name__ == "__main__":
     csv_in = args and args[0] or CSV_INPUT
 
     write_class_time_table_xls(csv_in)
-    # class_time_table(csv_in)
+    class_time_table(csv_in)
