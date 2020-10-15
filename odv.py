@@ -353,7 +353,7 @@ def write_prof_dict_xls(prof_dict, xsl_out):
 
         # Titolo: centrato su tutta la larghezza (48 colonne)
 
-        sheet.set_row(row, 24)
+        sheet.set_row(row, 42)
         sheet.merge_range(0,0,0,48, "Orario", title_format)
         row += 1
 
@@ -574,14 +574,14 @@ def make_class_timetable_array(klass, lessons):
         "14:00 - 14:40",
     ]
     END_TIMES = ordereddict((               # BUG: stupid name!
-        ("07h50",  "8:00 - 8:40"),
-        ("08h40",  "8:50 - 9:30"),
-        ("09h30",  "9:40 - 10:20"),
-        ("10h30", "10:40 - 11:20"),
-        ("11h20", "11:30 - 12:10"),
-        ("12h15", "12:20 - 13:00"),
-        ("13h10", "13:10 - 14:00"),
-        ("14h00", "14:00 - 14:40"),
+        ("07h50",  "8:00\n 8:40"),
+        ("08h40",  "8:50\n 9:30"),
+        ("09h30",  "9:40\n10:20"),
+        ("10h30", "10:40\n11:20"),
+        ("11h20", "11:30\n12:10"),
+        ("12h15", "12:20\n13:00"),
+        ("13h10", "13:10\n14:00"),
+        ("14h00", "14:00\n14:40"),
     ))
     # BUG
     # hh = [""] + [s.replace("h", ".").lstrip("0") for s in START_TIMES]
@@ -613,7 +613,7 @@ def make_class_timetable_array(klass, lessons):
                     zot = o.DOC_NOME[0] + "."
                 else:
                     zot = ""
-                r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()} {zot}")
+                r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()} {zot}\nsincrona")
         rr.append(r)
 
     rr = list(zip(*rr, fillvalue=""))
@@ -637,7 +637,7 @@ def write_class_time_table_xls(csv_in, xls_out="out/class-timetable.xls"):
     lessons_dict = defaultdict(list)
 
     sheet = book.add_worksheet()
-    sheet.set_default_row(30)
+    sheet.set_default_row(44)
     sheet.set_column(1, 6, 15)
 
     # Reorganize date from class_dict (that uses classes as keys) to
