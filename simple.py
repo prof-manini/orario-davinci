@@ -1,5 +1,6 @@
 import csv
 from recordclass import recordclass
+from collections import defaultdict
 
 import logging
 logging.basicConfig(level=logging.DEBUG,
@@ -31,6 +32,19 @@ def csv_to_rows(csv_in):
     with open(csv_in, newline="", encoding=enc) as data:
         return list(csv.reader(data, delimiter=";"))[1:]
 
+DAYS_SHIFT = {"lunedì":     0,
+              "martedì":    8,
+              "mercoledì": 16,
+              "giovedì":   24,
+              "venerdì":   32,
+              "sabato":    40}
+
+DAYS = list(DAYS_SHIFT.keys())
+DAYS_DICT = {d:i for i,d in enumerate(DAYS)}
+
+def day_index(day):
+    return DAYS_DICT[day]
+
 COLUMNS = """
   NUMERO   DURATA      FREQUENZA  MAT_COD
   MAT_NOME DOC_COGN    DOC_NOME   CLASSE
@@ -43,14 +57,22 @@ COLUMNS = """
     num duration freq mat_code mat_name
     prof_surname prof_name klass room period
     spec prof_bis coeff day start stud_count
+    day_index start_index start_str prof_fullname
 """.strip()
 
-start_times = "07h50 08h40 09h30 10h30 11h20 12h15 13h10 14h00".split()
+COLUMNS_COUNT = len(COLUMNS.split())
+
+START_TIMES = "07:50 08:40 09:30 10:30 11:20 12:15 13:10 14:00".split()
+
+START_DICT = {s:i for i,s in enumerate(START_TIMES)}
+def start_index(start):
+    return START_DICT[start]
+
 Record = recordclass("Record", COLUMNS)
 
 def make_empty_record():
     "An empty record, to be 'manually' filled, used for testing"
-    line = [""] * 16
+    line = [""] * COLUMNS_COUNT
     r = Record(*line)
     # r.duration = 1
     # r.klass = "5A"
@@ -60,10 +82,17 @@ def clean_record(r):
     "Modify/fix some fields in R (in place!)"
     r.duration = int(r.duration[0])
     r.klass = r.klass.strip("as")
+    r.day_index = day_index(r.day)
+    r.start = r.start.replace("h", ":")
+    r.start_index = start_index(r.start)
+    name = r.prof_name and r.prof_name[0] or ""
+    r.prof_fullname = f"{r.prof_surname} {name}."
 
 def make_record(row, clean=True):
     "Return a new record with data from ROW"
     # row.append(None)
+    missing = COLUMNS_COUNT - len(row)
+    row.extend([" "] * missing)
     r = Record(*row)
     if clean:
         clean_record(r)
@@ -93,8 +122,9 @@ def expand_multiple_duration(r):
     for off in range(r.duration):
         c = r.__copy__()
         c.duration = 1
-        index = start_times.index(r.start)
-        c.start = start_times[index+off]
+        index = start_index(r.start) + off
+        c.start_index = index
+        c.start = START_TIMES[index]
         oo.append(c)
     return oo
 
@@ -148,6 +178,29 @@ def expand_records(recs):
     debug(f"Expanded {class_count} multiple classes records")
     return oo
 
+def prof_classes(recs):
+    d = defaultdict(set)
+    for r in recs:
+        pp = r.prof_fullname
+        d[pp].add( (r.klass, r.mat_code) )
+    return d
+
+def class_profs(recs):
+    d = defaultdict(set)
+    for r in recs:
+        k = r.klass
+        v = r.prof_fullname
+        d[k].add(v)
+    return d
+
+def class_lessons(recs):
+    d = defaultdict(list)
+    for r in recs:
+        k = r.klass
+        v = r.day_index, r.start_index, r.mat_code, r.prof_fullname
+        d[k].append(v)
+    return d
+
 def banner(s, char="-", count=40, max_len=40):
     out = "--- %s %s" % (s, char * count)
     print(out[:40])
@@ -197,12 +250,11 @@ def show_summaries(recs):
                  title="Stupid klass names")
 
     banner("start times")
-    start_times = "07h50 08h40 09h30 10h30 11h20 12h15 13h10 14h00".split()
     times = {r.start for r in recs}
     for t in times:
-        if t not in start_times:
+        if t not in START_TIMES:
             raise Exception("Bad start time", t)
-    print(start_times)
+    print(START_TIMES)
 
     count = 0
     for r in recs:
@@ -215,11 +267,16 @@ if __name__ == "__main__":
     file = "data/export.csv"
     rows = csv_to_rows(file)
     recs = rows_to_records(rows)
-    show_summaries(recs)
+    # show_summaries(recs)
 
     klasses = {r.klass for r in recs}
     debug(f"{len(klasses)} BEFORE expansion")
     debug(klasses)
+
+    banner("Summaries BEFORE expansion")
+    # show_summaries(recs)
+
+    # AFTER ==========================================
 
     recs = expand_records(recs)
     debug(f"Records after expansion: {len(recs)}")
@@ -227,3 +284,27 @@ if __name__ == "__main__":
     klasses = {r.klass for r in recs}
     debug(f"{len(klasses)} AFTER expansion")
     debug(klasses)
+
+    banner("Summaries AFTER expansion")
+    # show_summaries(recs)
+
+    banner("Prof -> classes")
+    pp = prof_classes(recs)
+    for p,oo in sorted(pp.items()):
+        print("%s -> %s" % (p, sorted(oo)))
+
+    banner("Class -> Profs")
+    pp = class_profs(recs)
+    for p,oo in sorted(pp.items()):
+        print("%s -> %s" % (p, sorted(oo)))
+
+    banner("Class -> Lessons")
+    pp = class_lessons(recs)
+    for k,oo in sorted(pp.items()):
+        print(f"\n{k}")
+        for day_idx, start_idx, mat_code, prof_fullname in oo:
+            day = DAYS[day_idx]
+            start = START_TIMES[start_idx]
+            print(day_idx, "%-10s" % day,
+                  start_idx, start,
+                  mat_code, prof_fullname)
