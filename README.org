@@ -102,7 +102,7 @@ DEBUG: 110 classes found
 DEBUG: Writing output CSV file 'out/class-timetable-csv/class-timetable.csv'
 #+END_SRC
 
-* Local Vxoariables                                                :noexport:
+* Local Variables                                                  :noexport:
 
 # Local Variables:
 # indent-tabs-mode: nil
