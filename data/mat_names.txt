@@ -14,3 +14,4 @@ SPA = Spagnolo
 STG = Sto. Geo.
 STO = Storia
 TED = Tedesco
+POT-ING = Pot. Ing.
