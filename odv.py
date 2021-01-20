@@ -164,6 +164,10 @@ def records_to_class_dict(recs):
     recs = tuple(recs)
     for r in recs:
         k,v = r.CLASSE, r
+
+        # Manini 20/01/2021
+        k = k.strip().strip("[]")
+
         if "/" in k:                   # "2G/H SPA"
             cc, mat = k.split()        # ["2G/H". "SPA"]
             try:
@@ -487,7 +491,13 @@ def class_time_table_try(csv_in):
             for o in sorted(lessons, key=start_sorter):
                 start = o.ORA_INIZIO.replace("h", ".") # 07h50 -> 07.50
                 start = start.lstrip("0")              # 07.50 ->  7.50
-                mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                # Manini 20/01/2021
+                try:
+                    mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                except KeyError as e:
+                    debug(e)
+                    continue
+
                 print(f"{mat:12s} {start:>5.5s}   {o.DOC_COGN}")
 
 def make_class_timetable_csv(klass, lessons):
@@ -507,7 +517,13 @@ def make_class_timetable_csv(klass, lessons):
     for day, lessons in sorted(lessons.items(), key=day_sorter):
         r = [day]
         for o in sorted(lessons, key=start_sorter):
-            mat = mat_names[o.MAT_COD]             # ING -> Inglese
+            # Manini 20/01/2021
+            try:
+                mat = mat_names[o.MAT_COD]             # ING -> Inglese
+            except KeyError as e:
+                debug(e)
+                continue
+
             r.append(f'"{o.ORA_INIZIO} {o.DOC_COGN}"')
             # r.append(f"{mat:12s} {o.DOC_COGN}")
         rr.append(r)
@@ -608,7 +624,11 @@ def make_class_timetable_array(klass, lessons):
             if o is None:
                 r.append("")
             else:
-                mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                try:
+                    mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                except KeyError as e:
+                    debug(e)
+                    continue
                 if o.DOC_NOME:
                     zot = o.DOC_NOME[0] + "."
                 else:
