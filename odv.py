@@ -418,7 +418,7 @@ MAT_NAMES = dict()
 def get_mat_names(input="data/mat_names.txt"):
     if MAT_NAMES:
         return MAT_NAMES
-    debug("{_me()}: reading {input}")
+    debug(f"{_me()}: reading {input}")
     with open(input) as rows:
         for r in rows:
             if not r.strip():
