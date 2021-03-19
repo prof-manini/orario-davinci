@@ -19,8 +19,11 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                     format="%(levelname)s: %(message)s")
 debug = logging.debug
+error = logging.error
 
 CSV_INPUT = "data/export.csv"
+
+DELETE_MATTER = True
 
 # generic data structures and functions ----------------------------
 
@@ -34,7 +37,7 @@ Record = namedtuple("Record", """
     NUMERO DURATA FREQUENZA MAT_COD MAT_NOME
     DOC_COGN DOC_NOME CLASSE AULA PERIODICITA
     SPECIFICA CO_DOC COEFF GIORNO ORA_INIZIO ALUNNI
-    ORA_PROG
+
 """)
 
 def make_record(row):
@@ -84,7 +87,7 @@ DAYS_PER_WEEK = len(DAYS_SHIFT)
 # format shown below, but it is useful to be able to easily convert it
 # in a sequence id.
 
-START_TIMES = "07h50 08h40 09h30 10h30 11h20 12h15 13h10 14h00".split()
+START_TIMES = "07h50 08h40 09h30 10h30 11h20 12h15 13h10 14h00 14h50".split()
 START_SHIFT = list_to_items_pos_dict(START_TIMES)
 START_INDEX = {t:START_TIMES.index(t) for t in START_TIMES}
 
@@ -113,14 +116,21 @@ def get_encoding(file):
 # tupla).
 
 def csv_to_records(csv_in):
+    get_mat_names() # to check MAT_COD'es to be in MAT_COD/MAT_NAME data file
 
     debug("Reading input file '%s'" % csv_in)
     enc = get_encoding(csv_in)
     with open(csv_in, newline="", encoding=enc) as data:
         rows = list(csv.reader(data, delimiter=";"))[1:]
         debug(f"{len(rows)} rows found")
-        for r in rows:
-            yield make_record(r)
+        for index, r in enumerate(rows):
+            rec = make_record(r)
+            if rec.MAT_COD not in MAT_NAMES:
+                error(f"Bad mat code: {index=} {str(rec)}")
+            if rec.ORA_INIZIO not in START_TIMES:
+                error(f"Bad start time: {index=} {str(rec)}")
+
+            yield rec
 
 def _me():
     # https://www.oreilly.com/library/view/python-cookbook/0596001673/ch14s08.html
@@ -164,7 +174,6 @@ def records_to_class_dict(recs):
     recs = tuple(recs)
     for r in recs:
         k,v = r.CLASSE, r
-
         # Manini 20/01/2021
         k = k.strip().strip("[]")
 
@@ -198,7 +207,7 @@ def records_to_class_dict(recs):
             d = int(r.DURATA[0])
             r.ORA_PROG = START_INDEX[r.ORA_INIZIO]
             lessons_count += 1
-            # debug(f"{_me()}: long lesson {r.CLASSE} -> {d}")
+            # if d > 1: debug(f"{_me()}: long lesson {r.CLASSE} -> {d}")
             for i in range(1, d):
                 t = Record(*list(r))
                 o = START_SHIFT[t.ORA_INIZIO] + i
@@ -292,22 +301,22 @@ def data_to_dict(raw_data):
 
     return prof_dict
 
-def write_prof_dict_csv(prof_dict, csv_out):
+# def write_prof_dict_csv(prof_dict, csv_out):
 
-    # Qui scrivo il risultato in un file CSV usando semplicemente un
-    # file di testo e relativo metodo "write".  Il modulo csv ha un
-    # metodo apposito che però non mi pare offra vantaggi
-    # interessanti.
+#     # Qui scrivo il risultato in un file CSV usando semplicemente un
+#     # file di testo e relativo metodo "write".  Il modulo csv ha un
+#     # metodo apposito che però non mi pare offra vantaggi
+#     # interessanti.
 
-    debug(f"Writing output CSV file '{csv_out}'")
-    with open(csv_out, "w") as output:
-        for prof_cod, ss in sorted(prof_dict.items()):
-            prof_surname, prof_firstname = prof_cod
-            prof_data = "%s %s." % (prof_surname, prof_firstname and
-                                    prof_firstname[0])
-            data = [prof_data] + ss
-            line = ",".join(data)
-            output.write(line + "\n")
+#     debug(f"Writing output CSV file '{csv_out}'")
+#     with open(csv_out, "w") as output:
+#         for prof_cod, ss in sorted(prof_dict.items()):
+#             prof_surname, prof_firstname = prof_cod
+#             prof_data = "%s %s." % (prof_surname, prof_firstname and
+#                                     prof_firstname[0])
+#             data = [prof_data] + ss
+#             line = ",".join(data)
+#             output.write(line + "\n")
 
 def write_prof_dict_xls(prof_dict, xsl_out):
 
@@ -402,6 +411,15 @@ def write_prof_dict_xls(prof_dict, xsl_out):
         data = [prof_data] + ss
         old = None
         for col, text in enumerate(data):
+
+            # Manini: 04/02/2021
+            text = text.strip().strip("[]")
+
+            # Manini: strip MATTER ???
+
+            if DELETE_MATTER and " " in text:
+                text = text.split()[0]
+
             if col in [0,1]:
                 sheet.write(row, col, text, prof_format)
             else:
@@ -431,134 +449,134 @@ def get_mat_names(input="data/mat_names.txt"):
             MAT_NAMES[k] = v
     return MAT_NAMES
 
-def class_time_table_try(csv_in):
+# def class_time_table_try(csv_in):
 
-    recs = csv_to_records(csv_in)
-    class_dict = records_to_class_dict(recs)
-    lessons_dict = defaultdict(list)
+#     recs = csv_to_records(csv_in)
+#     class_dict = records_to_class_dict(recs)
+#     lessons_dict = defaultdict(list)
 
-    # Reorganize date from class_dict (that uses classes as keys) to
-    # lessons_dict (that uses days as keys).  Both use records a
-    # values.
+#     # Reorganize date from class_dict (that uses classes as keys) to
+#     # lessons_dict (that uses days as keys).  Both use records a
+#     # values.
 
-    for klass, recs in sorted(class_dict.items()):
-        day_lessons = defaultdict(list)
-        lessons_dict[klass] = day_lessons
-        for r in recs:
-            day_lessons[r.GIORNO].append(r)
+#     for klass, recs in sorted(class_dict.items()):
+#         day_lessons = defaultdict(list)
+#         lessons_dict[klass] = day_lessons
+#         for r in recs:
+#             day_lessons[r.GIORNO].append(r)
 
-    # Load abbreviations for subjects: "Inglese" instead "Lingua e
-    # Cultura Straniera Inglese" as description for ING).
+#     # Load abbreviations for subjects: "Inglese" instead "Lingua e
+#     # Cultura Straniera Inglese" as description for ING).
 
-    mat_names = get_mat_names()
+#     mat_names = get_mat_names()
 
-    # The timetable should look something like:
-    """
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    |       | Lunedì    | Martedì     | Mercoledì | Giovedì | Venerdì | Sabato |
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    |  7.50 |           | Informatica |           |         |         |        |
-    |       |           | Manini      |           |         |         |        |
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    |  8.40 |           | Informatica |           |         |         |        |
-    |       |           | Manini      |           |         |         |        |
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    |  9.30 |           |             | Italiano  |         |         |        |
-    |       |           |             | Rossi     |         |         |        |
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    | 10.30 |           |             |           |         |         |        |
-    |       |           |             |           |         |         |        |
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    | 11.20 | Dir. Eco. |             |           |         |         |        |
-    |       | Verdi     |             |           |         |         |        |
-    |-------+-----------+-------------+-----------+---------+---------+--------|
-    """
-    # Here we have all the data we need, but ordered by weekday first
-    # (and then by time) while in the table the
-    # order should be time first.
-    #
-    # If we put the data in a "matrix" (list of lists, We may then use
-    # the zip function to "transpose" it.
-    #
-    # >>> t = [[1,2,3], [4,5,6], [7,8,9]]
-    # >>> list(zip(*t))
-    # [(1, 4, 7), (2, 5, 8), (3, 6, 9)]
+#     # The timetable should look something like:
+#     """
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     |       | Lunedì    | Martedì     | Mercoledì | Giovedì | Venerdì | Sabato |
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     |  7.50 |           | Informatica |           |         |         |        |
+#     |       |           | Manini      |           |         |         |        |
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     |  8.40 |           | Informatica |           |         |         |        |
+#     |       |           | Manini      |           |         |         |        |
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     |  9.30 |           |             | Italiano  |         |         |        |
+#     |       |           |             | Rossi     |         |         |        |
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     | 10.30 |           |             |           |         |         |        |
+#     |       |           |             |           |         |         |        |
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     | 11.20 | Dir. Eco. |             |           |         |         |        |
+#     |       | Verdi     |             |           |         |         |        |
+#     |-------+-----------+-------------+-----------+---------+---------+--------|
+#     """
+#     # Here we have all the data we need, but ordered by weekday first
+#     # (and then by time) while in the table the
+#     # order should be time first.
+#     #
+#     # If we put the data in a "matrix" (list of lists, We may then use
+#     # the zip function to "transpose" it.
+#     #
+#     # >>> t = [[1,2,3], [4,5,6], [7,8,9]]
+#     # >>> list(zip(*t))
+#     # [(1, 4, 7), (2, 5, 8), (3, 6, 9)]
 
-    for klass, lessons in sorted(lessons_dict.items()):
-        print(f"\n=== {klass} ====================")
-        for day, lessons in sorted(lessons.items(), key=day_sorter):
-            print(f"\n    {day} ----------------")
-            for o in sorted(lessons, key=start_sorter):
-                start = o.ORA_INIZIO.replace("h", ".") # 07h50 -> 07.50
-                start = start.lstrip("0")              # 07.50 ->  7.50
-                # Manini 20/01/2021
-                try:
-                    mat = mat_names[o.MAT_COD]             # ING -> Inglese
-                except KeyError as e:
-                    debug(e)
-                    continue
+#     for klass, lessons in sorted(lessons_dict.items()):
+#         print(f"\n=== {klass} ====================")
+#         for day, lessons in sorted(lessons.items(), key=day_sorter):
+#             print(f"\n    {day} ----------------")
+#             for o in sorted(lessons, key=start_sorter):
+#                 start = o.ORA_INIZIO.replace("h", ".") # 07h50 -> 07.50
+#                 start = start.lstrip("0")              # 07.50 ->  7.50
+#                 # Manini 20/01/2021
+#                 try:
+#                     mat = mat_names[o.MAT_COD]             # ING -> Inglese
+#                 except KeyError as e:
+#                     debug(f"class_time_table_try {klass=} {lesson=}: {e}")
+#                     continue
 
-                print(f"{mat:12s} {start:>5.5s}   {o.DOC_COGN}")
+#                 print(f"{mat:12s} {start:>5.5s}   {o.DOC_COGN}")
 
-def make_class_timetable_csv(klass, lessons):
+# def make_class_timetable_csv(klass, lessons):
 
-    # Load abbreviations for subjects: "Inglese" instead "Lingua e
-    # Cultura Straniera Inglese" as description for ING).
+#     # Load abbreviations for subjects: "Inglese" instead "Lingua e
+#     # Cultura Straniera Inglese" as description for ING).
 
-    mat_names = get_mat_names()
+#     mat_names = get_mat_names()
 
-    # print(f"\n=== {klass} ====================")
-    rr = list()
-    # dd = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
+#     # print(f"\n=== {klass} ====================")
+#     rr = list()
+#     # dd = ["Ora"] + [d[:3].upper() for d in DAYS_SHIFT]
 
-    hh = [""] + [s.replace("h", ":").lstrip("0") for s in START_TIMES]
-    rr.append(hh)
+#     hh = [""] + [s.replace("h", ":").lstrip("0") for s in START_TIMES]
+#     rr.append(hh)
 
-    for day, lessons in sorted(lessons.items(), key=day_sorter):
-        r = [day]
-        for o in sorted(lessons, key=start_sorter):
-            # Manini 20/01/2021
-            try:
-                mat = mat_names[o.MAT_COD]             # ING -> Inglese
-            except KeyError as e:
-                debug(e)
-                continue
+#     for day, lessons in sorted(lessons.items(), key=day_sorter):
+#         r = [day]
+#         for o in sorted(lessons, key=start_sorter):
+#             # Manini 20/01/2021
+#             try:
+#                 mat = mat_names[o.MAT_COD]             # ING -> Inglese
+#             except KeyError as e:
+#                 debug(e)
+#                 continue
 
-            r.append(f'"{o.ORA_INIZIO} {o.DOC_COGN}"')
-            # r.append(f"{mat:12s} {o.DOC_COGN}")
-        rr.append(r)
+#             r.append(f'"{o.ORA_INIZIO} {o.DOC_COGN}"')
+#             # r.append(f"{mat:12s} {o.DOC_COGN}")
+#         rr.append(r)
 
-    rr = list(zip(*rr, fillvalue=""))
-    kk = [""] * 3 + [klass] + [""] * 3
-    rr.insert(0, [""] * len(kk))
-    rr.insert(1, kk)
-    return rr
+#     rr = list(zip(*rr, fillvalue=""))
+#     kk = [""] * 3 + [klass] + [""] * 3
+#     rr.insert(0, [""] * len(kk))
+#     rr.insert(1, kk)
+#     return rr
 
-def class_time_table(csv_in, csv_out="./a.csv"):
+# def class_time_table(csv_in, csv_out="./a.csv"):
 
-    recs = csv_to_records(csv_in)
-    class_dict = records_to_class_dict(recs)
-    lessons_dict = defaultdict(list)
+#     recs = csv_to_records(csv_in)
+#     class_dict = records_to_class_dict(recs)
+#     lessons_dict = defaultdict(list)
 
-    # Reorganize date from class_dict (that uses classes as keys) to
-    # lessons_dict (that uses days as keys).  Both use records a
-    # values.
+#     # Reorganize date from class_dict (that uses classes as keys) to
+#     # lessons_dict (that uses days as keys).  Both use records a
+#     # values.
 
-    for klass, recs in sorted(class_dict.items()):
-        day_lessons = defaultdict(list)
-        lessons_dict[klass] = day_lessons
-        for r in recs:
-            day_lessons[r.GIORNO].append(r)
+#     for klass, recs in sorted(class_dict.items()):
+#         day_lessons = defaultdict(list)
+#         lessons_dict[klass] = day_lessons
+#         for r in recs:
+#             day_lessons[r.GIORNO].append(r)
 
-    with open(csv_out, "w") as output:
-        for klass, lessons in sorted(lessons_dict.items()):
-            out = make_class_timetable_csv(klass, lessons)
-            for r in out:
-                if any (r[1:]):
-                    s = ",".join(r)
-                    # return
-                    output.write(s + "\n")
-            output.write("\n")
+#     with open(csv_out, "w") as output:
+#         for klass, lessons in sorted(lessons_dict.items()):
+#             out = make_class_timetable_csv(klass, lessons)
+#             for r in out:
+#                 if any (r[1:]):
+#                     s = ",".join(r)
+#                     # return
+#                     output.write(s + "\n")
+#             output.write("\n")
 
 def start_sorter(r):
     return r.ORA_PROG
@@ -615,25 +633,38 @@ def make_class_timetable_array(klass, lessons):
         #     r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()}")
 
         foo = ordereddict()
-        for st in START_TIMES:
-            foo[st] = None
+        # for st in START_TIMES:  # prefill with all start times!
+        #     foo[st] = None
+        # for less in lessons:
+        #     foo[less.ORA_INIZIO] = less
+        for st in START_TIMES:  # prefill with all start times!
+            foo[st] = list()
         for less in lessons:
-            foo[less.ORA_INIZIO] = less
+            foo[less.ORA_INIZIO].append(less)
 
-        for st, o in foo.items():
-            if o is None:
+        for index, (st, oo) in enumerate(foo.items()):
+            if not oo:           # no lessons at this time
                 r.append("")
             else:
+                mm = list()
                 try:
-                    mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                    for o in oo:
+                        mat = mat_names[o.MAT_COD]             # ING -> Inglese
+                        mat = o.MAT_COD # .capitalize()
+                        mm.append(mat)
                 except KeyError as e:
-                    debug(e)
+                    foo = f"{index=},{o.MAT_COD=},{o.DOC_NOME=}"
+                    debug(f"make_class_timetable_array ({foo}) {e}")
                     continue
-                if o.DOC_NOME:
-                    zot = o.DOC_NOME[0] + "."
-                else:
-                    zot = ""
-                r.append(f"{mat.strip()}\n{o.DOC_COGN.strip()} {zot}\nsincrona")
+                mat = "/".join(mm).strip()
+                # if len(oo) > 1:
+                #     debug(f"MULTIPLE {mat}")
+                pp = list()
+                for o in oo:
+                    pp.append(o.DOC_COGN.strip())
+                prof = "/".join(pp)
+                # BUG: single MAT only ???
+                r.append(f"{mat}\n{prof}\nsincrona")
         rr.append(r)
 
     rr = list(zip(*rr, fillvalue=""))
@@ -709,4 +740,4 @@ if __name__ == "__main__":
     csv_in = args and args[0] or CSV_INPUT
 
     write_class_time_table_xls(csv_in)
-    class_time_table(csv_in)
+    # class_time_table(csv_in)

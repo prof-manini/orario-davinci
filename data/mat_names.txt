@@ -15,3 +15,7 @@ STG = Sto. Geo.
 STO = Storia
 TED = Tedesco
 POT-ING = Pot. Ing.
+C   = Coll. Dir.
+S   = Ore sistema
+SOS = Sostegno
+SP = Sportello
