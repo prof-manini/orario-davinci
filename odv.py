@@ -24,6 +24,7 @@ error = logging.error
 CSV_INPUT = "data/export.csv"
 
 DELETE_MATTER = True
+MERGE_CELLS = False
 
 # generic data structures and functions ----------------------------
 
@@ -423,7 +424,7 @@ def write_prof_dict_xls(prof_dict, xsl_out):
             if col in [0,1]:
                 sheet.write(row, col, text, prof_format)
             else:
-                if text and text == old:
+                if MERGE_CELLS and text and text == old:
                     sheet.merge_range(row, col-1,
                                       row, col,
                                       text, merge_format)
