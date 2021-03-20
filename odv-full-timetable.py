@@ -3,7 +3,7 @@
 import sys
 import os
 # from odv import data_to_dict, write_prof_dict_csv, write_prof_dict_xls
-from odv import data_to_dict, write_prof_dict_xls
+from odv import data_to_prof_dict, write_prof_dict_xls
 
 progname = os.path.basename(__file__)
 
@@ -16,7 +16,7 @@ def main(csv_in,
     # che è la funzione chiamabile da un altro file dopo aver
     # importato questo come modulo.
 
-    prof_dict = data_to_dict(csv_in)
+    prof_dict = data_to_prof_dict(csv_in)
     # write_prof_dict_csv(prof_dict, csv_out)
     write_prof_dict_xls(prof_dict, xls_out)
 
