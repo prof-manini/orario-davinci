@@ -7,3 +7,14 @@ web/
 *.out
 *.aux
 *.tex
+
+__pycache__/
+_archive/
+_stuff_/
+data/
+doc/
+out/
+simple-out/
+exa.py
+output-orario.xls
+restart.org
