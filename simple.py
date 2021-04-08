@@ -49,6 +49,7 @@ def calc_summaries(rows):
     cc_dic = defaultdict(set)
     klass_set = set()
     mat_dic = dict()
+    prof_tt = defaultdict(list)
     prof_set = set()
     room_set = set()
 
@@ -81,6 +82,8 @@ def calc_summaries(rows):
 
             cc_dic[k.strip()].add((prof_surname, mat_cod))
 
+            prof_tt[(prof_surname, prof_name)].append((day,start,mat_cod))
+
     info(f"{multi_class} multi-class records found")
 
     return {
@@ -89,6 +92,7 @@ def calc_summaries(rows):
         "Rooms": room_set,
         "Subjects": mat_dic,
         "CC": cc_dic,
+        "Prof_TT": prof_tt,
     }
 
 def string_collection(oo, name, limit=1000):
@@ -117,6 +121,19 @@ def save_cc(cc):
         s = string_cc(cc)
         out.write(s)
 
+def save_prof_tt(cc):
+    f = f"simple-out/prof_tt.txt"
+    info(f"Saving {len(cc)} prof timetable lines to '{f}'")
+    with open(f, "w") as out:
+        for k,vv in sorted(cc.items()):
+            out.write(f"\n{' '.join(k)}\n")
+            for v in vv:
+                day,time,mat = v
+                day = day.upper()[:3]
+                time = time.replace("h", ":").lstrip("0")
+                s = "%s %5s %s" % (day,time,mat)
+                out.write(f"   {s}\n")
+
 def save_summaries(rows):
 
     data = calc_summaries(rows)
@@ -127,6 +144,8 @@ def save_summaries(rows):
         info(f"...writing {len(c)} lines to '{f}'")
         if s == "CC":
             save_cc(c)
+        elif s == "Prof_TT":
+            save_prof_tt(c)
         else:
             with open(f, "w") as out:
                 out.write(string_collection(c, s))
